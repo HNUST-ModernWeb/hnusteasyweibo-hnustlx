@@ -1,0 +1,46 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: weibo_lx_server
+  doc:
+    swagger-ui:
+      enabled: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.hnust.lx: debug
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  global-parameters:
+    - name: token
+      description: 登录Token
+      required: false
+      in: header
+
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+  swagger-global-parameters:
+    - name: token
+      description: 登录Token
+      required: false
+      modelRef:
+        type: string
+
+weibo:
+  jwt:
+    admin-secret-key: mySecretKey2024AdminSecure32Bytes!!
+    admin-token-name: admin_token
+    admin-ttl: 86400000
+    user-secret-key: mySecretKey2024UserSecure32Bytes!!
+    user-token-name: user_token
+    user-ttl: 86400000
