@@ -1,0 +1,2541 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "微博系统API接口文档",
+    "description": "微博系统（简易版）API接口文档，包含用户、动态、评论、点赞四大核心模块，提供完整的CRUD及分页查询功能，支持Token鉴权",
+    "version": "1.0.0",
+    "contact": {
+      "name": "技术开发组",
+      "description": "如有接口疑问，请联系开发组"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "本地开发环境服务器地址"
+    }
+  ],
+  "paths": {
+    "/user/register": {
+      "post": {
+        "summary": "用户注册",
+        "tags": ["用户模块"],
+        "description": "新用户注册，用户名唯一，密码需进行加密存储",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "用户名（3-15位，字母、数字、下划线组成）",
+                    "example": "weibo_user1",
+                    "minLength": 3,
+                    "maxLength": 15
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码（6-20位，包含字母和数字）",
+                    "example": "User123456",
+                    "minLength": 6,
+                    "maxLength": 20
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "用户头像URL（可选，可后续修改）",
+                    "example": "http://localhost:8080/upload/avatar/default.jpg",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "注册成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "注册成功",
+                  "data": {
+                    "userId": 1001,
+                    "username": "weibo_user1",
+                    "avatar": "http://localhost:8080/upload/avatar/default.jpg"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "用户名已存在",
+                  "data": null
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器异常",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 500,
+                  "msg": "注册失败，请稍后再试",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/login": {
+      "post": {
+        "summary": "用户登录",
+        "tags": ["用户模块"],
+        "description": "用户通过用户名和密码登录，获取鉴权Token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "用户名",
+                    "example": "weibo_user1"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "密码",
+                    "example": "User123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "登录成功",
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "user": {
+                      "userId": 1001,
+                      "username": "weibo_user1",
+                      "avatar": "http://localhost:8080/upload/avatar/default.jpg"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误/账号密码错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "用户名或密码错误",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "账号禁用",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "账号已被禁用，请联系管理员",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/info": {
+      "get": {
+        "summary": "获取用户信息",
+        "tags": ["用户模块"],
+        "description": "根据用户ID获取用户详细信息，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "用户ID",
+            "example": 1001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "userId": 1001,
+                    "username": "weibo_user1",
+                    "avatar": "http://localhost:8080/upload/avatar/default.jpg",
+                    "createTime": "2026-03-01 10:30:00",
+                    "status": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "用户不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/update": {
+      "put": {
+        "summary": "修改用户信息",
+        "tags": ["用户模块"],
+        "description": "用户修改自身信息（用户名、头像），需携带Token鉴权，用户名需唯一",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "新用户名（3-15位，可选）",
+                    "example": "weibo_newuser1",
+                    "minLength": 3,
+                    "maxLength": 15,
+                    "nullable": true
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "新头像URL（可选）",
+                    "example": "http://localhost:8080/upload/avatar/1001_new.jpg",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "修改成功",
+                  "data": {
+                    "userId": 1001,
+                    "username": "weibo_newuser1",
+                    "avatar": "http://localhost:8080/upload/avatar/1001_new.jpg"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "用户名已存在",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权修改他人信息",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/add": {
+      "post": {
+        "summary": "发布动态",
+        "tags": ["动态模块"],
+        "description": "用户发布微博动态，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId", "content"],
+                "properties": {
+                  "userId": {
+                    "type": "integer",
+                    "description": "发布用户ID（当前登录用户ID）",
+                    "example": 1001
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "动态内容（1-200字）",
+                    "example": "今天天气真好，适合出门散步～",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发布成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "发布成功",
+                  "data": {
+                    "postId": 2001,
+                    "content": "今天天气真好，适合出门散步～",
+                    "createTime": "2026-03-02 14:20:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "动态内容不能为空",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/list": {
+      "get": {
+        "summary": "动态列表（分页）",
+        "tags": ["动态模块"],
+        "description": "分页查询所有用户的动态（按发布时间降序），无需鉴权",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 100,
+                    "records": [
+                      {
+                        "postId": 2001,
+                        "userId": 1001,
+                        "username": "weibo_user1",
+                        "avatar": "http://localhost:8080/upload/avatar/1001.jpg",
+                        "content": "今天天气真好，适合出门散步～",
+                        "likeCount": 56,
+                        "commentCount": 12,
+                        "createTime": "2026-03-02 14:20:00",
+                        "status": 1
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 10
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "页码或每页条数不能为负数",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/detail/{postId}": {
+      "get": {
+        "summary": "动态详情",
+        "tags": ["动态模块"],
+        "description": "根据动态ID获取动态详情（包含点赞数、评论数），无需鉴权",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "动态ID",
+            "example": 2001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "postId": 2001,
+                    "userId": 1001,
+                    "username": "weibo_user1",
+                    "avatar": "http://localhost:8080/upload/avatar/1001.jpg",
+                    "content": "今天天气真好，适合出门散步～",
+                    "likeCount": 56,
+                    "commentCount": 12,
+                    "createTime": "2026-03-02 14:20:00",
+                    "updateTime": null,
+                    "status": 1
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/update": {
+      "put": {
+        "summary": "修改动态",
+        "tags": ["动态模块"],
+        "description": "用户修改自身发布的动态，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["postId", "userId", "content"],
+                "properties": {
+                  "postId": {
+                    "type": "integer",
+                    "description": "动态ID",
+                    "example": 2001
+                  },
+                  "userId": {
+                    "type": "integer",
+                    "description": "发布用户ID（当前登录用户ID）",
+                    "example": 1001
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "修改后的动态内容（1-200字）",
+                    "example": "今天天气真好，适合出门散步和拍照～",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "修改成功",
+                  "data": {
+                    "postId": 2001,
+                    "content": "今天天气真好，适合出门散步和拍照～",
+                    "updateTime": "2026-03-02 15:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "动态内容不能为空",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权修改他人动态",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/delete": {
+      "delete": {
+        "summary": "删除动态",
+        "tags": ["动态模块"],
+        "description": "用户删除自身发布的动态（逻辑删除），需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["postId", "userId"],
+                "properties": {
+                  "postId": {
+                    "type": "integer",
+                    "description": "动态ID",
+                    "example": 2001
+                  },
+                  "userId": {
+                    "type": "integer",
+                    "description": "发布用户ID（当前登录用户ID）",
+                    "example": 1001
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权删除他人动态",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comment/add": {
+      "post": {
+        "summary": "发表评论",
+        "tags": ["评论模块"],
+        "description": "用户对指定动态发表评论，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId", "postId", "content"],
+                "properties": {
+                  "userId": {
+                    "type": "integer",
+                    "description": "评论用户ID（当前登录用户ID）",
+                    "example": 1002
+                  },
+                  "postId": {
+                    "type": "integer",
+                    "description": "所属动态ID",
+                    "example": 2001
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "评论内容（1-100字）",
+                    "example": "同感！我也觉得今天天气很棒～",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "评论成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "评论成功",
+                  "data": {
+                    "commentId": 3001,
+                    "postId": 2001,
+                    "content": "同感！我也觉得今天天气很棒～",
+                    "createTime": "2026-03-02 14:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "评论内容不能为空",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comment/list/{postId}": {
+      "get": {
+        "summary": "评论列表（分页）",
+        "tags": ["评论模块"],
+        "description": "分页查询指定动态的所有评论，无需鉴权",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "所属动态ID",
+            "example": 2001
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 12,
+                    "records": [
+                      {
+                        "commentId": 3001,
+                        "postId": 2001,
+                        "userId": 1002,
+                        "username": "weibo_user2",
+                        "avatar": "http://localhost:8080/upload/avatar/1002.jpg",
+                        "content": "同感！我也觉得今天天气很棒～",
+                        "createTime": "2026-03-02 14:30:00",
+                        "status": 1
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 2
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "页码或每页条数不能为负数",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comment/delete": {
+      "delete": {
+        "summary": "删除评论",
+        "tags": ["评论模块"],
+        "description": "用户删除自身发表的评论（逻辑删除），需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["commentId", "userId"],
+                "properties": {
+                  "commentId": {
+                    "type": "integer",
+                    "description": "评论ID",
+                    "example": 3001
+                  },
+                  "userId": {
+                    "type": "integer",
+                    "description": "评论用户ID（当前登录用户ID）",
+                    "example": 1002
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权删除他人评论",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "评论不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "评论不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/like/toggle": {
+      "post": {
+        "summary": "点赞/取消点赞",
+        "tags": ["点赞模块"],
+        "description": "用户对指定动态进行点赞或取消点赞操作，需携带Token鉴权；已点赞则取消，未点赞则新增",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId", "postId"],
+                "properties": {
+                  "userId": {
+                    "type": "integer",
+                    "description": "点赞用户ID（当前登录用户ID）",
+                    "example": 1003
+                  },
+                  "postId": {
+                    "type": "integer",
+                    "description": "被点赞动态ID",
+                    "example": 2001
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "examples": {
+                  "点赞成功": {
+                    "value": {
+                      "code": 200,
+                      "msg": "点赞成功",
+                      "data": {
+                        "likeId": 4001,
+                        "postId": 2001,
+                        "status": 1,
+                        "createTime": "2026-03-02 14:25:00"
+                      }
+                    }
+                  },
+                  "取消点赞成功": {
+                    "value": {
+                      "code": 200,
+                      "msg": "取消点赞成功",
+                      "data": {
+                        "likeId": 4001,
+                        "postId": 2001,
+                        "status": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/like/my-list": {
+      "get": {
+        "summary": "我的点赞列表（分页）",
+        "tags": ["点赞模块"],
+        "description": "分页查询当前登录用户的所有点赞记录，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 8,
+                    "records": [
+                      {
+                        "likeId": 4001,
+                        "userId": 1003,
+                        "postId": 2001,
+                        "postContent": "今天天气真好，适合出门散步～",
+                        "username": "weibo_user1",
+                        "createTime": "2026-03-02 14:25:00",
+                        "status": 1
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 1
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "页码或每页条数不能为负数",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/like/post-list/{postId}": {
+      "get": {
+        "summary": "动态点赞列表（分页）",
+        "tags": ["点赞模块"],
+        "description": "分页查询指定动态的所有点赞记录，无需鉴权",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "目标动态ID",
+            "example": 2001
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 56,
+                    "records": [
+                      {
+                        "likeId": 4001,
+                        "userId": 1003,
+                        "username": "weibo_user3",
+                        "avatar": "http://localhost:8080/upload/avatar/1003.jpg",
+                        "createTime": "2026-03-02 14:25:00"
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 6
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "页码或每页条数不能为负数",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag/add": {
+      "post": {
+        "summary": "创建标签",
+        "tags": ["标签模块"],
+        "description": "管理员创建新标签，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tagName"],
+                "properties": {
+                  "tagName": {
+                    "type": "string",
+                    "description": "标签名称（1-30字）",
+                    "example": "美食",
+                    "minLength": 1,
+                    "maxLength": 30
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "创建成功",
+                  "data": {
+                    "tagId": 5001,
+                    "tagName": "美食"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误/标签已存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "标签名称已存在",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag/list": {
+      "get": {
+        "summary": "标签列表（分页）",
+        "tags": ["标签模块"],
+        "description": "分页查询所有标签，无需鉴权",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 20,
+                    "records": [
+                      {
+                        "tagId": 5001,
+                        "tagName": "美食",
+                        "postCount": 15
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 2
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "页码或每页条数不能为负数",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag/delete": {
+      "post": {
+        "summary": "删除标签",
+        "tags": ["标签模块"],
+        "description": "管理员删除指定标签，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["tagId"],
+                "properties": {
+                  "tagId": {
+                    "type": "integer",
+                    "description": "标签ID",
+                    "example": 5001
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "标签不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "标签不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post-tag/add": {
+      "post": {
+        "summary": "为动态添加标签",
+        "tags": ["动态标签模块"],
+        "description": "用户为自身发布的动态添加标签，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["postId", "tagIds"],
+                "properties": {
+                  "postId": {
+                    "type": "integer",
+                    "description": "动态ID",
+                    "example": 2001
+                  },
+                  "userId": {
+                    "type": "integer",
+                    "description": "发布用户ID（当前登录用户ID）",
+                    "example": 1001
+                  },
+                  "tagIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "description": "标签ID数组",
+                    "example": [5001, 5002]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "添加成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "添加成功",
+                  "data": {
+                    "postId": 2001,
+                    "tags": [
+                      {"tagId": 5001, "tagName": "美食"},
+                      {"tagId": 5002, "tagName": "旅行"}
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "参数错误",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权操作他人动态",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态或标签不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态或标签不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post-tag/list/{postId}": {
+      "get": {
+        "summary": "获取动态的标签列表",
+        "tags": ["动态标签模块"],
+        "description": "根据动态ID获取该动态的所有标签，无需鉴权",
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "动态ID",
+            "example": 2001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "postId": 2001,
+                    "tags": [
+                      {"tagId": 5001, "tagName": "美食"},
+                      {"tagId": 5002, "tagName": "旅行"}
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态不存在或已删除",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post-tag/delete": {
+      "post": {
+        "summary": "删除动态的标签",
+        "tags": ["动态标签模块"],
+        "description": "用户删除动态的指定标签，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["postId", "tagId"],
+                "properties": {
+                  "postId": {
+                    "type": "integer",
+                    "description": "动态ID",
+                    "example": 2001
+                  },
+                  "tagId": {
+                    "type": "integer",
+                    "description": "标签ID",
+                    "example": 5001
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "删除成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "无权操作他人动态",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "动态或标签不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "动态或标签不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/login": {
+      "post": {
+        "summary": "管理员登录",
+        "tags": ["管理员模块"],
+        "description": "管理员通过用户名和密码登录，获取鉴权Token（使用adminToken）",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "description": "管理员用户名",
+                    "example": "admin"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "管理员密码",
+                    "example": "admin123"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "登录成功",
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "userId": 1,
+                    "username": "admin",
+                    "userType": 1,
+                    "status": 1
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误/账号密码错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "管理员用户名或密码错误",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user/list": {
+      "get": {
+        "summary": "用户列表（分页）",
+        "tags": ["管理员模块"],
+        "description": "管理员分页查询所有用户列表，需携带管理员Token鉴权",
+        "security": [
+          {
+            "adminTokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 50,
+                    "records": [
+                      {
+                        "userId": 1001,
+                        "username": "weibo_user1",
+                        "avatar": "http://localhost:8080/upload/avatar/1001.jpg",
+                        "createTime": "2026-03-01 10:30:00",
+                        "userType": 0,
+                        "status": 1
+                      },
+                      {
+                        "userId": 1002,
+                        "username": "weibo_user2",
+                        "avatar": "http://localhost:8080/upload/avatar/1002.jpg",
+                        "createTime": "2026-03-01 11:00:00",
+                        "userType": 0,
+                        "status": 1
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 5
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user/status": {
+      "put": {
+        "summary": "修改用户状态",
+        "tags": ["管理员模块"],
+        "description": "管理员修改用户状态（启用/禁用），需携带管理员Token鉴权",
+        "security": [
+          {
+            "adminTokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "integer",
+                    "description": "目标用户ID",
+                    "example": 2
+                  },
+                  "isDeleted": {
+                    "type": "integer",
+                    "enum": [0, 1],
+                    "description": "用户状态：0正常，1禁用",
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "用户状态已修改",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "用户不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/user/{id}": {
+      "delete": {
+        "summary": "删除用户",
+        "tags": ["管理员模块"],
+        "description": "管理员删除指定用户（硬删除），需携带管理员Token鉴权",
+        "security": [
+          {
+            "adminTokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "目标用户ID",
+            "example": 1002
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "用户已删除",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "用户不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "tokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "user_token",
+        "description": "用户Token鉴权"
+      },
+      "adminTokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "adminToken",
+        "description": "管理员Token鉴权"
+      }
+    },
+    "schemas": {
+      "R": {
+        "type": "object",
+        "description": "通用返回模型",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "状态码：200成功，400参数错误，401未授权，403禁止访问，404资源不存在，500服务器异常",
+            "example": 200
+          },
+          "msg": {
+            "type": "string",
+            "description": "返回信息",
+            "example": "操作成功"
+          },
+          "data": {
+            "type": "object",
+            "description": "返回数据（可选）",
+            "nullable": true,
+            "example": {}
+          }
+        },
+        "required": ["code", "msg"]
+      },
+      "UserVO": {
+        "type": "object",
+        "description": "用户信息返回模型",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "用户ID",
+            "example": 1001
+          },
+          "username": {
+            "type": "string",
+            "description": "用户名",
+            "example": "weibo_user1"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "用户头像URL",
+            "example": "http://localhost:8080/upload/avatar/1001.jpg",
+            "nullable": true
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "注册时间",
+            "example": "2026-03-01 10:30:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "用户状态：1正常，0禁用",
+            "example": 1
+          },
+          "userType": {
+            "type": "integer",
+            "description": "用户类型：0普通用户，1管理员",
+            "example": 0
+          },
+          "token": {
+            "type": "string",
+            "description": "鉴权Token",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": ["userId", "username", "createTime", "status"]
+      },
+      "PostVO": {
+        "type": "object",
+        "description": "动态信息返回模型",
+        "properties": {
+          "postId": {
+            "type": "integer",
+            "description": "动态ID",
+            "example": 2001
+          },
+          "userId": {
+            "type": "integer",
+            "description": "发布用户ID",
+            "example": 1001
+          },
+          "username": {
+            "type": "string",
+            "description": "发布用户名",
+            "example": "weibo_user1"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "发布用户头像URL",
+            "example": "http://localhost:8080/upload/avatar/1001.jpg",
+            "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "动态内容",
+            "example": "今天天气真好，适合出门散步～"
+          },
+          "likeCount": {
+            "type": "integer",
+            "description": "点赞数",
+            "example": 56
+          },
+          "commentCount": {
+            "type": "integer",
+            "description": "评论数",
+            "example": 12
+          },
+          "createTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "发布时间",
+            "example": "2026-03-02 14:20:00"
+          },
+          "updateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "修改时间（未修改则为null）",
+            "example": "2026-03-02 15:30:00",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "description": "动态状态：1正常，0删除",
+            "example": 1
+          }
+        },
+        "required": ["postId", "userId", "username", "content", "likeCount", "commentCount", "createTime", "status"]
+      },
+      "CommentVO": {
+        "type": "object",
+        "description": "评论信息返回模型",
+        "properties": {
+          "commentId": {
+            "type": "integer",
+            "description": "评论ID",
+            "example": 3001
+          },
+          "postId": {
+            "type": "integer",
+            "description": "所属动态ID",
+            "example": 2001
+          },
+          "userId": {
+            "type": "integer",
+            "description": "评论用户ID",
+            "example": 1002
+          },
+          "username": {
+            "type": "string",
+            "description": "评论用户名",
+            "example": "weibo_user2"
+          },
+          "avatar": {
+            "type": "string",
+            "description": "评论用户头像",
+            "example": "http://localhost:8080/upload/avatar/1002.jpg",
+            "nullable": true
+          }
+        }
+      },
+      "TagVO": {
+        "type": "object",
+        "description": "标签信息返回模型",
+        "properties": {
+          "tagId": {
+            "type": "integer",
+            "description": "标签ID",
+            "example": 5001
+          },
+          "tagName": {
+            "type": "string",
+            "description": "标签名称",
+            "example": "美食"
+          },
+          "postCount": {
+            "type": "integer",
+            "description": "关联动态数",
+            "example": 15
+          }
+        }
+      }
+    }
+  }
+}
