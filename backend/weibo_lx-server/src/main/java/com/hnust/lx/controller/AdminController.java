@@ -5,6 +5,7 @@ import com.hnust.lx.dto.UserStatusDTO;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.result.Result;
 import com.hnust.lx.service.AdminService;
+import com.hnust.lx.vo.StatsVO;
 import com.hnust.lx.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +24,12 @@ public class AdminController {
     @Operation(summary = "管理员登录", description = "管理员登录验证")
     public Result<UserVO> login(@RequestBody AdminLoginDTO dto) {
         return Result.success(adminService.login(dto));
+    }
+
+    @GetMapping("/stats")
+    @Operation(summary = "获取统计数据", description = "获取用户、动态、评论、标签数量")
+    public Result<StatsVO> getStats() {
+        return Result.success(adminService.getStats());
     }
 
     @GetMapping("/user/list")

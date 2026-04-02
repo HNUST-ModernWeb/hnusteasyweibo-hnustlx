@@ -6,9 +6,11 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -21,6 +23,9 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
 
     private final JwtTokenAdminInterceptor jwtTokenAdminInterceptor;
     private final JwtTokenUserInterceptor jwtTokenUserInterceptor;
+
+    @Value("${weibo.web.upload-path}")
+    private String webUploadPath;
 
     /**
      * 注册自定义拦截器
@@ -46,6 +51,7 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                         "/user/info",
                         "/user/update",
                         "/user/status",
+                        "/user/avatar",
                         "/post/add",
                         "/post/delete",
                         "/post/update",
@@ -57,6 +63,8 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/user/register",
                         "/user/login",
+                        "/user/info",
+                        "/user/info/*",
                         "/post/list",
                         "/post/detail",
                         "/comment/list",
@@ -68,6 +76,16 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                         "/v3/api-docs/**",
                         "/swagger-ui/**"
                 );
+    }
+
+    /**
+     * 配置静态资源映射
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        log.info("配置静态资源映射，upload-path: {}", webUploadPath);
+        registry.addResourceHandler("/upload/**")
+                .addResourceLocations("file:" + webUploadPath);
     }
 
     /**

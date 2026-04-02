@@ -55,4 +55,10 @@ public class PostController {
         postService.deletePost(userId, dto.getPostId());
         return Result.success();
     }
+
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "获取用户帖子", description = "获取指定用户的所有帖子")
+    public Result<Long> getUserTotalLikes(@PathVariable(name = "userId") Long userId) {
+        return Result.success(postService.getUserTotalLikes(userId));
+    }
 }

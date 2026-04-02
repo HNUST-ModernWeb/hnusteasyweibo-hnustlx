@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tag")
 @RequiredArgsConstructor
@@ -37,5 +39,11 @@ public class TagController {
     public Result<Void> deleteTag(@RequestBody TagDeleteDTO dto) {
         tagService.deleteTag(dto);
         return Result.success();
+    }
+
+    @GetMapping("/hot")
+    @Operation(summary = "获取热门标签", description = "获取动态最多的标签")
+    public Result<List<TagVO>> getHotTags(@RequestParam(name = "limit", defaultValue = "9") Integer limit) {
+        return Result.success(tagService.getHotTags(limit));
     }
 }

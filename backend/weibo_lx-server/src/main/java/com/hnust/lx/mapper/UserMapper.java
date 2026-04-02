@@ -34,4 +34,9 @@ public interface UserMapper {
 
     @Delete("DELETE FROM user WHERE user_id = #{userId}")
     int delete(Long userId);
+
+    @Select("SELECT user_id as userId, username, password, avatar, register_time as registerTime, " +
+            "user_type as userType, is_deleted as isDeleted FROM user WHERE is_deleted = 0 " +
+            "AND username LIKE CONCAT('%', #{keyword}, '%') LIMIT #{limit}")
+    List<User> searchByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
 }

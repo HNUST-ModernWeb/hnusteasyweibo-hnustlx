@@ -5,6 +5,8 @@ import com.hnust.lx.entity.Post;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.vo.PostVO;
 
+import java.util.List;
+
 public interface PostService {
 
     PostVO addPost(PostAddDTO dto);
@@ -18,4 +20,8 @@ public interface PostService {
     void deletePost(Long userId, Long postId);
 
     Post getPostById(Long postId);
+
+    List<Post> getUserPosts(Long userId);
+
+    Long getUserTotalLikes(Long userId);
 }
