@@ -2,6 +2,7 @@ package com.hnust.lx.service;
 
 import com.hnust.lx.dto.AdminLoginDTO;
 import com.hnust.lx.result.PageResult;
+import com.hnust.lx.vo.StatsVO;
 import com.hnust.lx.vo.UserVO;
 
 public interface AdminService {
@@ -13,4 +14,6 @@ public interface AdminService {
     void updateUserStatus(Long userId, Integer isDeleted);
 
     void deleteUser(Long userId);
+
+    StatsVO getStats();
 }

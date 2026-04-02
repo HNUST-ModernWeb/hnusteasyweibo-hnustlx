@@ -11,6 +11,7 @@ import com.hnust.lx.properties.JwtProperties;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.AdminService;
 import com.hnust.lx.utils.JwtUtil;
+import com.hnust.lx.vo.StatsVO;
 import com.hnust.lx.vo.UserVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -91,5 +92,20 @@ public class AdminServiceImpl implements AdminService {
             throw new ResourceNotFoundException(MessageConstant.USER_NOT_FOUND);
         }
         adminMapper.deleteById(userId);
+    }
+
+    @Override
+    public StatsVO getStats() {
+        Long userCount = adminMapper.countAllUsers();
+        Long postCount = adminMapper.countAllPosts();
+        Long commentCount = adminMapper.countAllComments();
+        Long tagCount = adminMapper.countAllTags();
+        
+        return StatsVO.builder()
+                .userCount(userCount)
+                .postCount(postCount)
+                .commentCount(commentCount)
+                .tagCount(tagCount)
+                .build();
     }
 }

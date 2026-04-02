@@ -15,10 +15,10 @@ public interface AdminMapper {
 
     @Select("SELECT user_id as userId, username, avatar, register_time as registerTime, " +
             "user_type as userType, is_deleted as isDeleted FROM user " +
-            "WHERE is_deleted = 0 ORDER BY register_time DESC LIMIT #{offset}, #{pageSize}")
+            "ORDER BY register_time DESC LIMIT #{offset}, #{pageSize}")
     List<User> listUsers(@Param("offset") Integer offset, @Param("pageSize") Integer pageSize);
 
-    @Select("SELECT COUNT(*) FROM user WHERE is_deleted = 0")
+    @Select("SELECT COUNT(*) FROM user")
     Long countUsers();
 
     @Update("UPDATE user SET is_deleted = #{isDeleted} WHERE user_id = #{userId}")
@@ -30,4 +30,16 @@ public interface AdminMapper {
 
     @Delete("DELETE FROM user WHERE user_id = #{userId}")
     int deleteById(@Param("userId") Long userId);
+
+    @Select("SELECT COUNT(*) FROM user WHERE is_deleted = 0")
+    Long countAllUsers();
+
+    @Select("SELECT COUNT(*) FROM post WHERE is_deleted = 0")
+    Long countAllPosts();
+
+    @Select("SELECT COUNT(*) FROM comment WHERE is_deleted = 0")
+    Long countAllComments();
+
+    @Select("SELECT COUNT(*) FROM tag WHERE is_deleted = 0")
+    Long countAllTags();
 }

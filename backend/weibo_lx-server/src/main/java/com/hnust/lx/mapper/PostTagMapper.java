@@ -32,4 +32,20 @@ public interface PostTagMapper {
 
     @Select("SELECT EXISTS(SELECT 1 FROM post_tag WHERE post_id = #{postId} AND tag_id = #{tagId})")
     boolean exists(@Param("postId") Long postId, @Param("tagId") Long tagId);
+
+    @Select("SELECT tag_id, COUNT(*) as postCount FROM post_tag GROUP BY tag_id ORDER BY postCount DESC LIMIT #{limit}")
+    List<TagCount> countByTagId(@Param("limit") Integer limit);
+    
+    @Select("SELECT COUNT(*) FROM post_tag WHERE tag_id = #{tagId}")
+    Long countByTagIdSingle(@Param("tagId") Long tagId);
+    
+    public static class TagCount {
+        private Long tagId;
+        private Long postCount;
+        
+        public Long getTagId() { return tagId; }
+        public void setTagId(Long tagId) { this.tagId = tagId; }
+        public Long getPostCount() { return postCount; }
+        public void setPostCount(Long postCount) { this.postCount = postCount; }
+    }
 }

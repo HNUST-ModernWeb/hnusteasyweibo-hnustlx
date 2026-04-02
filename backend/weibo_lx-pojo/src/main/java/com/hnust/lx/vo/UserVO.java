@@ -22,4 +22,5 @@ public class UserVO implements Serializable {
     private Integer status;
     private Integer userType;
     private String token;
+    private Long totalLikes;
 }

@@ -6,6 +6,7 @@ import com.hnust.lx.constant.MessageConstant;
 import com.hnust.lx.dto.*;
 import com.hnust.lx.entity.Tag;
 import com.hnust.lx.exception.BaseException;
+import com.hnust.lx.mapper.PostTagMapper;
 import com.hnust.lx.mapper.TagMapper;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.TagService;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 public class TagServiceImpl implements TagService {
 
     private final TagMapper tagMapper;
+    private final PostTagMapper postTagMapper;
 
     @Override
     public TagVO addTag(TagAddDTO dto) {
@@ -62,5 +64,21 @@ public class TagServiceImpl implements TagService {
     @Override
     public void deleteTag(TagDeleteDTO dto) {
         tagMapper.delete(dto.getTagId());
+    }
+
+    @Override
+    public List<TagVO> getHotTags(Integer limit) {
+        List<PostTagMapper.TagCount> tagCounts = postTagMapper.countByTagId(limit);
+        
+        return tagCounts.stream()
+                .map(tc -> {
+                    Tag tag = tagMapper.findById(tc.getTagId());
+                    return TagVO.builder()
+                            .tagId(tc.getTagId())
+                            .tagName(tag != null ? tag.getTagName() : null)
+                            .postCount(Math.toIntExact(tc.getPostCount()))
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

@@ -372,6 +372,82 @@
         }
       }
     },
+    "/user/avatar": {
+      "post": {
+        "summary": "上传头像",
+        "tags": ["用户模块"],
+        "description": "用户上传头像，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "avatar": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "头像图片文件"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "上传成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "上传成功",
+                  "data": "/upload/avatar/abc123.jpg"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 400,
+                  "msg": "文件不能为空",
+                  "data": null
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/post/add": {
       "post": {
         "summary": "发布动态",
@@ -2049,11 +2125,75 @@
         }
       }
     },
+    "/admin/stats": {
+      "get": {
+        "summary": "获取统计数据",
+        "tags": ["管理员模块"],
+        "description": "管理员获取用户、动态、评论、标签数量统计，需携带管理员Token鉴权",
+        "security": [
+          {
+            "adminTokenAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "userCount": 100,
+                    "postCount": 500,
+                    "commentCount": 2000,
+                    "tagCount": 20
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "无权操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 403,
+                  "msg": "非管理员无权操作",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/user/list": {
       "get": {
         "summary": "用户列表（分页）",
         "tags": ["管理员模块"],
-        "description": "管理员分页查询所有用户列表，需携带管理员Token鉴权",
+        "description": "管理员分页查询所有用户列表（包括正常和禁用用户），需携带管理员Token鉴权",
         "security": [
           {
             "adminTokenAuth": []
@@ -2337,6 +2477,310 @@
           }
         }
       }
+    },
+    "/user/hot": {
+      "get": {
+        "summary": "热门博主",
+        "tags": ["用户模块"],
+        "description": "获取点赞数最多的用户列表，按总点赞数降序排列，无需鉴权",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 5
+            },
+            "description": "返回数量，默认5",
+            "example": 5
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": [
+                    {
+                      "userId": 2,
+                      "username": "user1",
+                      "avatar": "http://localhost:8080/upload/avatar/2.jpg",
+                      "totalLikes": 500
+                    },
+                    {
+                      "userId": 3,
+                      "username": "user2",
+                      "avatar": "http://localhost:8080/upload/avatar/3.jpg",
+                      "totalLikes": 300
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/user/info/query": {
+      "get": {
+        "summary": "根据用户ID查询用户信息",
+        "tags": ["用户模块"],
+        "description": "根据userId查询用户信息，不需要登录认证",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "用户ID",
+            "example": 1001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "userId": 1001,
+                    "username": "weibo_user1",
+                    "avatar": "http://localhost:8080/upload/avatar/default.jpg",
+                    "createTime": "2026-03-01 10:30:00",
+                    "status": 1
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "用户不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 404,
+                  "msg": "用户不存在",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/post/user/{userId}": {
+      "get": {
+        "summary": "获取用户总点赞数",
+        "tags": ["动态模块"],
+        "description": "获取指定用户所有帖子的总点赞数，无需鉴权",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "用户ID",
+            "example": 1001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": 156
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag/hot": {
+      "get": {
+        "summary": "热门标签",
+        "tags": ["标签模块"],
+        "description": "获取动态最多的标签列表，按帖子数量降序排列，无需鉴权",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 9
+            },
+            "description": "返回数量，默认9",
+            "example": 9
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": [
+                    {
+                      "tagId": 18,
+                      "tagName": "校园",
+                      "postCount": 20
+                    },
+                    {
+                      "tagId": 1,
+                      "tagName": "美食",
+                      "postCount": 15
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/user": {
+      "get": {
+        "summary": "搜索用户",
+        "tags": ["搜索模块"],
+        "description": "根据关键词搜索用户（按用户名模糊匹配），无需鉴权",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索关键词",
+            "example": "user"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "返回数量，默认20",
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": [
+                    {
+                      "userId": 2,
+                      "username": "user1",
+                      "avatar": "http://localhost:8080/upload/avatar/2.jpg",
+                      "registerTime": "2026-01-15 10:00:00",
+                      "userType": 0,
+                      "isDeleted": 0
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search/post": {
+      "get": {
+        "summary": "搜索帖子",
+        "tags": ["搜索模块"],
+        "description": "根据关键词搜索帖子（按内容模糊匹配），无需鉴权",
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "搜索关键词",
+            "example": "天气"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "返回数量，默认20",
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": [
+                    {
+                      "postId": 1,
+                      "userId": 2,
+                      "content": "今天天气真好，适合出门散步～",
+                      "postTime": "2026-03-01 10:30:00",
+                      "commentCount": 3,
+                      "likeCount": 5,
+                      "isDeleted": 0
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2418,6 +2862,12 @@
             "type": "string",
             "description": "鉴权Token",
             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "totalLikes": {
+            "type": "integer",
+            "description": "用户总点赞数（用于热门博主榜单）",
+            "example": 500,
+            "nullable": true
           }
         },
         "required": ["userId", "username", "createTime", "status"]

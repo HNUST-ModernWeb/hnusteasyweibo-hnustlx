@@ -47,4 +47,23 @@ public interface PostMapper {
 
     @Select("SELECT COUNT(*) FROM post WHERE is_deleted = 0")
     long count();
+    
+    @Select("SELECT user_id, SUM(like_count) as totalLikes FROM post WHERE is_deleted = 0 GROUP BY user_id ORDER BY totalLikes DESC LIMIT #{limit}")
+    List<UserLikes> countLikesByUserId(@Param("limit") Integer limit);
+    
+    public static class UserLikes {
+        private Long userId;
+        private Long totalLikes;
+        
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        public Long getTotalLikes() { return totalLikes; }
+        public void setTotalLikes(Long totalLikes) { this.totalLikes = totalLikes; }
+    }
+
+    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
+            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
+            "FROM post WHERE is_deleted = 0 AND content LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY post_time DESC LIMIT #{limit}")
+    List<Post> searchByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
 }

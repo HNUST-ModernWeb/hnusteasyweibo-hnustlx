@@ -94,6 +94,19 @@ public class PostServiceImpl implements PostService {
         return postMapper.findById(postId);
     }
 
+    @Override
+    public List<Post> getUserPosts(Long userId) {
+        return postMapper.findByUserId(userId);
+    }
+
+    @Override
+    public Long getUserTotalLikes(Long userId) {
+        List<Post> userPosts = postMapper.findByUserId(userId);
+        return userPosts.stream()
+                .mapToLong(p -> p.getLikeCount() != null ? p.getLikeCount() : 0)
+                .sum();
+    }
+
     private PostVO buildPostVO(Post post) {
         User user = userMapper.findById(post.getUserId());
         return PostVO.builder()
