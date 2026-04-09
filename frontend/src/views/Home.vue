@@ -77,6 +77,7 @@
               :post="post" 
               @click="goDetail(post.postId)"
               @refresh="fetchPosts"
+              @like-changed="refreshHotUsers"
             />
             
             <div v-if="loading" class="loading-state">
@@ -319,6 +320,15 @@ const goDetail = (postId) => {
 
 const refresh = () => {
   fetchPosts(true)
+}
+
+const refreshHotUsers = async () => {
+  try {
+    const usersRes = await userApi.getHot(5)
+    hotUsers.value = usersRes.data || []
+  } catch (e) {
+    console.error('刷新热门博主失败:', e)
+  }
 }
 
 const handleScroll = () => {

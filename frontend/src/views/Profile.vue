@@ -222,7 +222,10 @@ const saveProfile = async () => {
       const res = await fetch(editForm.value.avatar)
       const blob = await res.blob()
       formData.append('avatar', blob, 'avatar.jpg')
-      await userApi.uploadAvatar(formData)
+      const avatarRes = await userApi.uploadAvatar(formData)
+      const newAvatar = avatarRes.data || avatarRes
+      localStorage.setItem('avatar', newAvatar)
+      userInfo.value.avatar = newAvatar
     }
     
     showEdit.value = false
