@@ -16,6 +16,7 @@ import com.hnust.lx.vo.UserVO;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,6 +34,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PostMapper postMapper;
     private final JwtProperties jwtProperties;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${weibo.web.upload-path}")
     private String uploadPath;
@@ -52,7 +54,7 @@ public class UserServiceImpl implements UserService {
     public UserVO register(UserRegisterDTO dto) {
         User user = User.builder()
                 .username(dto.getUsername())
-                .password(dto.getPassword())
+                .password(passwordEncoder.encode(dto.getPassword()))
                 .avatar(dto.getAvatar())
                 .userType(0)
                 .isDeleted(0)
@@ -74,7 +76,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserVO login(UserLoginDTO dto) {
         User user = userMapper.findByUsername(dto.getUsername());
-        if (user == null || !user.getPassword().equals(dto.getPassword())) {
+        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
         if (user.getIsDeleted() == 1) {

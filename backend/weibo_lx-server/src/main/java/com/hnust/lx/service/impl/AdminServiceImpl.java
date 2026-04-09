@@ -14,6 +14,7 @@ import com.hnust.lx.utils.JwtUtil;
 import com.hnust.lx.vo.StatsVO;
 import com.hnust.lx.vo.UserVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -27,6 +28,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final AdminMapper adminMapper;
     private final JwtProperties jwtProperties;
+    private final PasswordEncoder passwordEncoder;
 
     private String generateToken(Long userId, Integer userType) {
         Map<String, Object> claims = new HashMap<>();
@@ -42,7 +44,7 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public UserVO login(AdminLoginDTO dto) {
         User user = adminMapper.login(dto.getUsername());
-        if (user == null || !user.getPassword().equals(dto.getPassword())) {
+        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new PasswordErrorException(MessageConstant.ADMIN_PASSWORD_ERROR);
         }
         
