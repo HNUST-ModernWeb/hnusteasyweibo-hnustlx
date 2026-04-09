@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -52,6 +52,15 @@ const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
 onMounted(() => {
   username.value = localStorage.getItem('username') || ''
   avatar.value = localStorage.getItem('avatar') || ''
+  window.addEventListener('focus', updateAvatar)
+})
+
+const updateAvatar = () => {
+  avatar.value = localStorage.getItem('avatar') || ''
+}
+
+onUnmounted(() => {
+  window.removeEventListener('focus', updateAvatar)
 })
 
 const goProfile = () => {

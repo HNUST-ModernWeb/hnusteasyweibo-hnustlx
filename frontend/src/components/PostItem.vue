@@ -68,7 +68,7 @@ import { useRouter } from 'vue-router'
 import { likeApi, postApi, postTagApi } from '../api'
 
 const props = defineProps({ post: Object })
-const emit = defineEmits(['click', 'refresh'])
+const emit = defineEmits(['click', 'refresh', 'like-changed'])
 
 const router = useRouter()
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
@@ -124,6 +124,7 @@ const handleLike = async () => {
     })
     console.log('点赞结果:', res)
     emit('refresh', true)
+    emit('like-changed')
   } catch (e) { 
     console.error('点赞失败:', e)
     alert('点赞失败: ' + (e.response?.data?.msg || e.message))
