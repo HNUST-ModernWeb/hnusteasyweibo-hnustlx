@@ -95,14 +95,15 @@
       <div class="modal-content">
         <h3>编辑资料</h3>
         <div class="form-group">
-          <label>用户名</label>
-          <input v-model="editForm.username" maxlength="15" />
+          <label for="username">用户名</label>
+          <input id="username" name="username" v-model="editForm.username" maxlength="15" autocomplete="username" style="width: 100%; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 15px; color: var(--text); background: var(--bg-card); appearance: none; -webkit-appearance: none; min-height: 48px; box-sizing: border-box;" />
         </div>
         <div class="form-group">
           <label>头像</label>
           <div class="avatar-upload">
             <img :src="editForm.avatar || defaultAvatar" class="preview-avatar" />
-            <input type="file" accept="image/*" @change="handleAvatarChange" />
+            <label for="avatar-upload-input" class="upload-label">点击更换头像</label>
+            <input id="avatar-upload-input" type="file" accept="image/*" style="display: none;" @change="handleAvatarChange" />
           </div>
         </div>
         <div class="modal-actions">
@@ -514,78 +515,186 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal-content {
-  background: #fff;
-  border-radius: 20px;
-  padding: 30px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 24px;
   width: 90%;
   max-width: 400px;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-content h3 {
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
   font-size: 18px;
   text-align: center;
+  color: var(--text);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .form-group label {
   display: block;
   font-size: 14px;
-  color: #666;
+  color: #fff;
   margin-bottom: 8px;
 }
 
-.form-group input[type="text"] {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
+:deep(.form-group input[type="text"]) {
+  width: 100% !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  font-size: 15px !important;
+  color: var(--text) !important;
+  background: var(--bg-card) !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  min-height: 48px !important;
+  box-sizing: border-box !important;
+}
+
+.form-group input[type="text"]:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.1),
+              0 4px 12px rgba(24, 144, 255, 0.15) !important;
+  background: var(--bg-card) !important;
+}
+
+.form-group input[type="text"]::placeholder {
+  color: var(--text-light);
   font-size: 14px;
+}
+
+.form-group input[type="text"]:hover:not(:focus) {
+  border-color: var(--text-light);
 }
 
 .avatar-upload {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 50%, #69c0ff 100%);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  font-weight: 500;
+  font-size: 14px;
+  color: #fff;
+  margin-bottom: 8px;
+  border: none;
+}
+
+.upload-label:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.upload-label:active {
+  transform: translateY(0);
 }
 
 .preview-avatar {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   object-fit: cover;
+  border: 3px solid var(--border);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.preview-avatar:hover {
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.avatar-upload input[type="file"] {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .modal-actions {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 20px;
 }
 
 .cancel-btn, .save-btn {
   flex: 1;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 15px;
+  padding: 10px;
+  border-radius: var(--radius);
+  font-size: 14px;
   cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .cancel-btn {
-  background: #f5f5f5;
-  border: none;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  border: 1px solid #d9d9d9;
   color: #666;
+  font-weight: 500;
+}
+
+.cancel-btn:hover {
+  background: linear-gradient(135deg, #e8e8e8 0%, #d9d9d9 100%);
+  color: #333;
+  transform: translateY(-2px);
+}
+
+.cancel-btn:active {
+  transform: translateY(0);
 }
 
 .save-btn {
-  background: linear-gradient(135deg, #1890ff, #1890ff);
+  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 50%, #69c0ff 100%);
   border: none;
   color: #fff;
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.save-btn:hover {
+  background: linear-gradient(135deg, #40a9ff 0%, #69c0ff 50%, #96c2ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+.save-btn:active {
+  transform: translateY(0);
 }
 
 @media (max-width: 600px) {
