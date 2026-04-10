@@ -15,6 +15,7 @@ import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.LikeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,6 +32,7 @@ public class LikeServiceImpl implements LikeService {
     private final UserMapper userMapper;
 
     @Override
+    @CacheEvict(value = {"hotUsers"}, allEntries = true)
     @Transactional
     public boolean toggleLike(LikeToggleDTO dto) {
         Post post = postMapper.findById(dto.getPostId());

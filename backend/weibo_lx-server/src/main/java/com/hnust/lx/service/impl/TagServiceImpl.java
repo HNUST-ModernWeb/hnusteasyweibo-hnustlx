@@ -12,6 +12,7 @@ import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.TagService;
 import com.hnust.lx.vo.TagVO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -67,6 +68,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @Cacheable(value = "hotTags", key = "'15'")
     public List<TagVO> getHotTags(Integer limit) {
         List<PostTagMapper.TagCount> tagCounts = postTagMapper.countByTagId(limit);
         
