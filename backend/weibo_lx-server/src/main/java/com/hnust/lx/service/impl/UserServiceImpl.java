@@ -138,6 +138,24 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("文件不能为空");
         }
         
+        // 先查询当前用户，获取旧头像路径
+        User currentUser = userMapper.findById(userId);
+        String oldAvatar = currentUser != null ? currentUser.getAvatar() : null;
+        
+        // 删除旧头像文件（如果不是默认头像）
+        if (oldAvatar != null && !oldAvatar.isEmpty() && !oldAvatar.contains("default")) {
+            try {
+                String oldFileName = oldAvatar.substring(oldAvatar.lastIndexOf("/") + 1);
+                File oldFile = new File(uploadPath + "avatar/" + oldFileName);
+                if (oldFile.exists()) {
+                    oldFile.delete();
+                    System.out.println("已删除旧头像: " + oldFileName);
+                }
+            } catch (Exception e) {
+                System.out.println("删除旧头像失败: " + e.getMessage());
+            }
+        }
+        
         // 获取文件扩展名
         String originalFilename = file.getOriginalFilename();
         String extension = "";
@@ -165,8 +183,7 @@ public class UserServiceImpl implements UserService {
         // 更新用户头像路径，返回完整URL
         String avatarUrl = "http://localhost:8080/upload/avatar/" + fileName;
         
-        // 先查询当前用户，保留原来的 username
-        User currentUser = userMapper.findById(userId);
+        // 保留原来的 username
         String username = currentUser != null ? currentUser.getUsername() : null;
         
         User user = User.builder()
