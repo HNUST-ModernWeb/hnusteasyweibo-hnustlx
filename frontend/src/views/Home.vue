@@ -357,7 +357,7 @@ onUnmounted(() => {
 }
 
 .main-container {
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -370,7 +370,7 @@ onUnmounted(() => {
 
 .feed-column {
   flex: 1;
-  max-width: 560px;
+  max-width: 540px;
   min-width: 0;
 }
 
@@ -581,7 +581,7 @@ onUnmounted(() => {
 }
 
 .sidebar {
-  width: 320px;
+  width: 360px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;

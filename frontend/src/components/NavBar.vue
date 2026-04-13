@@ -17,6 +17,11 @@
       </div>
       
       <div class="nav-actions">
+        <router-link to="/messages" class="message-link">
+          <span class="icon">💬</span>
+          <span>消息</span>
+        </router-link>
+        
         <router-link to="/publish" class="publish-btn">
           <span class="icon">✏️</span>
           <span>发布</span>
@@ -175,6 +180,30 @@ const doSearch = () => {
   transition: all 0.3s ease;
 }
 
+.message-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #1890ff;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.message-link:hover {
+  background: #40a9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(24, 144, 255, 0.4);
+}
+
+.message-link .icon {
+  font-size: 14px;
+}
+
 .publish-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(24, 144, 255, 0.4);
@@ -251,5 +280,23 @@ const doSearch = () => {
 
 .login-link:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .message-link {
+    display: none;
+  }
+  
+  .publish-btn {
+    padding: 6px 12px;
+  }
+  
+  .publish-btn .icon {
+    font-size: 12px;
+  }
+  
+  .publish-btn span:not(.icon) {
+    display: none;
+  }
 }
 </style>
