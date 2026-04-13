@@ -80,10 +80,6 @@
               @like-changed="refreshHotUsers"
             />
             
-            <div v-if="loading" class="loading-state">
-              <div class="spinner"></div>
-              <p>加载中...</p>
-            </div>
             
             <div v-if="!loading && posts.length === 0" class="empty-state">
               <div class="empty-icon">📝</div>
