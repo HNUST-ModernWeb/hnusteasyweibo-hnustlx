@@ -1513,6 +1513,176 @@
         }
       }
     },
+    "/like/received": {
+      "get": {
+        "summary": "获取我收到的点赞",
+        "tags": ["点赞模块"],
+        "description": "分页获取别人点赞我的帖子的列表，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 5,
+                    "records": [
+                      {
+                        "likeId": 4001,
+                        "userId": 1003,
+                        "username": "weibo_user3",
+                        "avatar": "http://localhost:8080/upload/avatar/1003.jpg",
+                        "postId": 2001,
+                        "postContent": "今天天气真好，适合出门散步～",
+                        "createTime": "2026-03-02 14:25:00"
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comment/received": {
+      "get": {
+        "summary": "获取我收到的评论",
+        "tags": ["评论模块"],
+        "description": "分页获取别人评论我的帖子的列表，需携带Token鉴权",
+        "security": [
+          {
+            "tokenAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "当前页码，默认1",
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10
+            },
+            "description": "每页条数，默认10",
+            "example": 10
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 3,
+                    "records": [
+                      {
+                        "commentId": 3001,
+                        "postId": 2001,
+                        "userId": 1002,
+                        "username": "weibo_user2",
+                        "avatar": "http://localhost:8080/upload/avatar/1002.jpg",
+                        "postContent": "今天天气真好，适合出门散步～",
+                        "content": "同感！我也觉得今天天气很棒～",
+                        "createTime": "2026-03-02 14:30:00",
+                        "status": 1
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "pages": 1
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/R"
+                },
+                "example": {
+                  "code": 401,
+                  "msg": "请先登录",
+                  "data": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tag/add": {
       "post": {
         "summary": "创建标签",
@@ -2962,6 +3132,26 @@
             "description": "评论用户头像",
             "example": "http://localhost:8080/upload/avatar/1002.jpg",
             "nullable": true
+          },
+          "content": {
+            "type": "string",
+            "description": "评论内容",
+            "example": "同感！我也觉得今天天气很棒～"
+          },
+          "postContent": {
+            "type": "string",
+            "description": "被评论的帖子内容",
+            "example": "今天天气真好，适合出门散步～"
+          },
+          "createTime": {
+            "type": "string",
+            "description": "评论时间",
+            "example": "2026-03-02 14:30:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "状态 1=正常",
+            "example": 1
           }
         }
       },

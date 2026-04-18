@@ -11,4 +11,6 @@ public interface CommentService {
     PageResult getCommentList(Long postId, Long page, Long pageSize);
 
     void deleteComment(Long userId, CommentDeleteDTO dto);
+
+    PageResult getReceivedComments(Long userId, Long page, Long pageSize);
 }

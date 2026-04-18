@@ -32,4 +32,14 @@ public interface PostLikeMapper {
 
     @Select("SELECT EXISTS(SELECT 1 FROM post_like WHERE post_id = #{postId} AND user_id = #{userId})")
     boolean exists(@Param("postId") Long postId, @Param("userId") Long userId);
+
+    @Select("<script>" +
+            "SELECT like_id as likeId, post_id as postId, user_id as userId, like_time as likeTime " +
+            "FROM post_like WHERE post_id IN " +
+            "<foreach collection='postIds' item='id' open='(' separator=',' close=')'>" +
+            "#{id}" +
+            "</foreach>" +
+            " ORDER BY like_time DESC" +
+            "</script>")
+    List<PostLike> findByPostIds(@Param("postIds") List<Long> postIds);
 }

@@ -72,6 +72,7 @@ public class LikeServiceImpl implements LikeService {
             map.put("postId", like.getPostId());
             map.put("postContent", post != null ? post.getContent() : null);
             map.put("username", user != null ? user.getUsername() : null);
+            map.put("avatar", user != null ? user.getAvatar() : null);
             map.put("createTime", like.getLikeTime());
             map.put("status", 1);
             return map;
@@ -97,6 +98,34 @@ public class LikeServiceImpl implements LikeService {
             return map;
         }).collect(Collectors.toList());
         
+        return new PageResult(pageInfo.getTotal(), voList);
+    }
+
+    @Override
+    public PageResult getReceivedLikes(Long userId, Long page, Long pageSize) {
+        List<Long> postIds = postMapper.findPostIdsByUserId(userId);
+        if (postIds == null || postIds.isEmpty()) {
+            return new PageResult(0, List.of());
+        }
+
+        PageHelper.startPage(page.intValue(), pageSize.intValue());
+        List<PostLike> likes = postLikeMapper.findByPostIds(postIds);
+        PageInfo<PostLike> pageInfo = new PageInfo<>(likes);
+
+        List<Object> voList = likes.stream().map(like -> {
+            User user = userMapper.findById(like.getUserId());
+            Post post = postMapper.findById(like.getPostId());
+            Map<String, Object> map = new HashMap<>();
+            map.put("likeId", like.getLikeId());
+            map.put("userId", like.getUserId());
+            map.put("username", user != null ? user.getUsername() : null);
+            map.put("avatar", user != null ? user.getAvatar() : null);
+            map.put("postId", like.getPostId());
+            map.put("postContent", post != null ? post.getContent() : null);
+            map.put("createTime", like.getLikeTime());
+            return map;
+        }).collect(Collectors.toList());
+
         return new PageResult(pageInfo.getTotal(), voList);
     }
 }

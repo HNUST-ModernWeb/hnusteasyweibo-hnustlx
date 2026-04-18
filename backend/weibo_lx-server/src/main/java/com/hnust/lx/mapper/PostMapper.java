@@ -33,6 +33,9 @@ public interface PostMapper {
             "FROM post WHERE user_id = #{userId} AND is_deleted = 0 ORDER BY post_time DESC")
     List<Post> findByUserId(Long userId);
 
+    @Select("SELECT post_id FROM post WHERE user_id = #{userId} AND is_deleted = 0")
+    List<Long> findPostIdsByUserId(Long userId);
+
     @Update("UPDATE post SET content = #{content} WHERE post_id = #{postId}")
     int update(Post post);
 

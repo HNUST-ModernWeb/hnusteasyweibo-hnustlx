@@ -62,13 +62,15 @@ export const postApi = {
 export const commentApi = {
   add: (data) => api.post('/comment/add', data),
   list: (postId, params) => api.get(`/comment/list/${postId}`, { params }),
-  delete: (data) => api.delete('/comment/delete', { data })
+  delete: (data) => api.delete('/comment/delete', { data }),
+  received: (params) => api.get('/comment/received', { params })
 }
 
 export const likeApi = {
   toggle: (data) => api.post('/like/toggle', data),
   myList: (params) => api.get('/like/my-list', { params }),
-  postList: (postId, params) => api.get(`/like/post-list/${postId}`, { params })
+  postList: (postId, params) => api.get(`/like/post-list/${postId}`, { params }),
+  received: (params) => api.get('/like/received', { params })
 }
 
 export const tagApi = {

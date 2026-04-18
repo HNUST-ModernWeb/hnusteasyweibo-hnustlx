@@ -43,4 +43,13 @@ public class CommentController {
         commentService.deleteComment(userId, dto);
         return Result.success();
     }
+
+    @GetMapping("/received")
+    @Operation(summary = "获取我收到的评论", description = "分页获取别人评论我的帖子的列表")
+    public Result<PageResult> getReceivedComments(
+            @RequestParam(name = "page", defaultValue = "1") Long page,
+            @RequestParam(name = "pageSize", defaultValue = "10") Long pageSize) {
+        Long userId = BaseContext.getCurrentId();
+        return Result.success(commentService.getReceivedComments(userId, page, pageSize));
+    }
 }

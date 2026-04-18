@@ -77,8 +77,25 @@ public class CommentServiceImpl implements CommentService {
         commentMapper.delete(dto.getCommentId());
     }
 
+    @Override
+    public PageResult getReceivedComments(Long userId, Long page, Long pageSize) {
+        List<Long> postIds = postMapper.findPostIdsByUserId(userId);
+        if (postIds == null || postIds.isEmpty()) {
+            return new PageResult(0, List.of());
+        }
+
+        PageHelper.startPage(page.intValue(), pageSize.intValue());
+        List<Comment> comments = commentMapper.findByPostIds(postIds);
+        PageInfo<Comment> pageInfo = new PageInfo<>(comments);
+
+        List<CommentVO> voList = comments.stream().map(this::buildCommentVO).collect(Collectors.toList());
+
+        return new PageResult(pageInfo.getTotal(), voList);
+    }
+
     private CommentVO buildCommentVO(Comment comment) {
         User user = userMapper.findById(comment.getUserId());
+        Post post = postMapper.findById(comment.getPostId());
         return CommentVO.builder()
                 .commentId(comment.getCommentId())
                 .postId(comment.getPostId())
@@ -86,6 +103,7 @@ public class CommentServiceImpl implements CommentService {
                 .username(user != null ? user.getUsername() : null)
                 .avatar(user != null ? user.getAvatar() : null)
                 .content(comment.getContent())
+                .postContent(post != null ? post.getContent() : null)
                 .createTime(comment.getCommentTime())
                 .status(comment.getIsDeleted() == 0 ? 1 : 0)
                 .build();

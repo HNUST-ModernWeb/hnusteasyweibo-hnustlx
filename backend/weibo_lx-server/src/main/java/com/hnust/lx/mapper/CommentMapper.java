@@ -33,4 +33,14 @@ public interface CommentMapper {
 
     @Select("SELECT COUNT(*) FROM comment WHERE post_id = #{postId} AND is_deleted = 0")
     long countByPostId(Long postId);
+
+    @Select("<script>" +
+            "SELECT comment_id as commentId, post_id as postId, user_id as userId, content, " +
+            "comment_time as commentTime, is_deleted as isDeleted FROM comment WHERE post_id IN " +
+            "<foreach collection='postIds' item='id' open='(' separator=',' close=')'>" +
+            "#{id}" +
+            "</foreach>" +
+            " AND is_deleted = 0 ORDER BY comment_time DESC" +
+            "</script>")
+    List<Comment> findByPostIds(@Param("postIds") List<Long> postIds);
 }

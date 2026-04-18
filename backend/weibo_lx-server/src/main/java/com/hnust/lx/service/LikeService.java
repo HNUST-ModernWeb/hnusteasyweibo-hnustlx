@@ -10,4 +10,6 @@ public interface LikeService {
     PageResult getMyLikes(Long userId, Long page, Long pageSize);
 
     PageResult getPostLikes(Long postId, Long page, Long pageSize);
+
+    PageResult getReceivedLikes(Long userId, Long page, Long pageSize);
 }

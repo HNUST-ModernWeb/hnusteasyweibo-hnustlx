@@ -10,13 +10,13 @@
       <div class="tabs">
         <span 
           :class="['tab', { active: activeTab === 'like' }]"
-          @click="activeTab = 'like'"
+          @click="switchTab('like')"
         >
           点赞
         </span>
         <span 
           :class="['tab', { active: activeTab === 'comment' }]"
-          @click="activeTab = 'comment'"
+          @click="switchTab('comment')"
         >
           评论
         </span>
@@ -33,10 +33,10 @@
           class="message-item"
           @click="goDetail(like.postId)"
         >
-          <img :src="defaultAvatar" class="message-avatar" />
+          <img :src="like.avatar || defaultAvatar" class="message-avatar" />
           <div class="message-content">
             <p class="message-text">
-              <span class="user-name">某人</span> 赞了你的帖子
+              <span class="user-name">{{ like.username || '某人' }}</span> 赞了你的帖子
             </p>
             <p class="message-preview">{{ like.postContent }}</p>
             <span class="message-time">{{ formatTime(like.createTime) }}</span>
@@ -56,13 +56,13 @@
           class="message-item"
           @click="goDetail(comment.postId)"
         >
-          <img :src="defaultAvatar" class="message-avatar" />
+          <img :src="comment.avatar || defaultAvatar" class="message-avatar" />
           <div class="message-content">
             <p class="message-text">
-              <span class="user-name">某人</span> 评论了你的帖子
+              <span class="user-name">{{ comment.username || '某人' }}</span> 评论了你的帖子
             </p>
-            <p class="message-preview">{{ comment.content }}</p>
-            <span class="message-time">{{ formatTime(comment.commentTime) }}</span>
+            <p class="message-preview">{{ comment.postContent }}</p>
+            <span class="message-time">{{ formatTime(comment.createTime) }}</span>
           </div>
         </div>
         
@@ -78,7 +78,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { likeApi, commentApi, postApi } from '../api'
+import { likeApi, commentApi } from '../api'
 import NavBar from '../components/NavBar.vue'
 
 const router = useRouter()
@@ -92,18 +92,8 @@ const comments = ref([])
 const fetchLikes = async () => {
   loading.value = true
   try {
-    const res = await likeApi.myList({ page: 1, pageSize: 20 })
-    const likeList = res.data?.records || []
-    
-    for (const like of likeList) {
-      try {
-        const postRes = await postApi.detail(like.postId)
-        like.postContent = postRes.data?.content || ''
-      } catch {
-        like.postContent = ''
-      }
-    }
-    likes.value = likeList
+    const res = await likeApi.received({ page: 1, pageSize: 20 })
+    likes.value = res.data?.records || []
   } catch (e) {
     console.error('获取点赞列表失败:', e)
   } finally {
@@ -114,7 +104,7 @@ const fetchLikes = async () => {
 const fetchComments = async () => {
   loading.value = true
   try {
-    const res = await commentApi.list(1, { page: 1, pageSize: 20 })
+    const res = await commentApi.received({ page: 1, pageSize: 20 })
     comments.value = res.data?.records || []
   } catch (e) {
     console.error('获取评论列表失败:', e)
