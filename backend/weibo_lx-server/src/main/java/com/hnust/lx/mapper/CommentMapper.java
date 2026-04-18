@@ -13,14 +13,16 @@ public interface CommentMapper {
     @Options(useGeneratedKeys = true, keyProperty = "commentId")
     int insert(Comment comment);
 
-    @Select("SELECT comment_id as commentId, post_id as postId, user_id as userId, content, " +
-            "comment_time as commentTime, is_deleted as isDeleted FROM comment " +
-            "WHERE post_id = #{postId} AND is_deleted = 0 ORDER BY comment_time DESC")
+    @Select("SELECT c.comment_id as commentId, c.post_id as postId, c.user_id as userId, c.content, " +
+            "c.comment_time as commentTime, c.is_deleted as isDeleted FROM comment c " +
+            "JOIN user u ON c.user_id = u.user_id " +
+            "WHERE c.post_id = #{postId} AND c.is_deleted = 0 AND u.is_deleted = 0 ORDER BY c.comment_time DESC")
     List<Comment> findByPostId(Long postId);
 
-    @Select("SELECT comment_id as commentId, post_id as postId, user_id as userId, content, " +
-            "comment_time as commentTime, is_deleted as isDeleted FROM comment " +
-            "WHERE post_id = #{postId} AND is_deleted = 0 ORDER BY comment_time DESC")
+    @Select("SELECT c.comment_id as commentId, c.post_id as postId, c.user_id as userId, c.content, " +
+            "c.comment_time as commentTime, c.is_deleted as isDeleted FROM comment c " +
+            "JOIN user u ON c.user_id = u.user_id " +
+            "WHERE c.post_id = #{postId} AND c.is_deleted = 0 AND u.is_deleted = 0 ORDER BY c.comment_time DESC")
     List<Comment> findByPostIdPage(Long postId);
 
     @Select("SELECT comment_id as commentId, post_id as postId, user_id as userId, content, " +
@@ -35,12 +37,14 @@ public interface CommentMapper {
     long countByPostId(Long postId);
 
     @Select("<script>" +
-            "SELECT comment_id as commentId, post_id as postId, user_id as userId, content, " +
-            "comment_time as commentTime, is_deleted as isDeleted FROM comment WHERE post_id IN " +
+            "SELECT c.comment_id as commentId, c.post_id as postId, c.user_id as userId, c.content, " +
+            "c.comment_time as commentTime, c.is_deleted as isDeleted FROM comment c " +
+            "JOIN user u ON c.user_id = u.user_id " +
+            "WHERE c.post_id IN " +
             "<foreach collection='postIds' item='id' open='(' separator=',' close=')'>" +
             "#{id}" +
             "</foreach>" +
-            " AND is_deleted = 0 ORDER BY comment_time DESC" +
+            " AND c.is_deleted = 0 AND u.is_deleted = 0 ORDER BY c.comment_time DESC" +
             "</script>")
     List<Comment> findByPostIds(@Param("postIds") List<Long> postIds);
 }

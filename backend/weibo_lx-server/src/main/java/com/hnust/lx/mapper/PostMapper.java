@@ -13,27 +13,32 @@ public interface PostMapper {
     @Options(useGeneratedKeys = true, keyProperty = "postId")
     int insert(Post post);
 
-    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
-            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
-            "FROM post WHERE is_deleted = 0 ORDER BY post_time DESC")
+    @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.post_time as postTime, " +
+            "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
+            "FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 ORDER BY p.post_time DESC")
     List<Post> findAll();
 
-    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
-            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
-            "FROM post WHERE is_deleted = 0 ORDER BY post_time DESC")
+    @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.post_time as postTime, " +
+            "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
+            "FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 ORDER BY p.post_time DESC")
     List<Post> findByPage();
 
-    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
-            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
-            "FROM post WHERE post_id = #{postId}")
+    @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.post_time as postTime, " +
+            "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
+            "FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.post_id = #{postId} AND u.is_deleted = 0")
     Post findById(Long postId);
 
-    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
-            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
-            "FROM post WHERE user_id = #{userId} AND is_deleted = 0 ORDER BY post_time DESC")
+    @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.post_time as postTime, " +
+            "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
+            "FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.user_id = #{userId} AND p.is_deleted = 0 AND u.is_deleted = 0 ORDER BY p.post_time DESC")
     List<Post> findByUserId(Long userId);
 
-    @Select("SELECT post_id FROM post WHERE user_id = #{userId} AND is_deleted = 0")
+    @Select("SELECT p.post_id FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.user_id = #{userId} AND p.is_deleted = 0 AND u.is_deleted = 0")
     List<Long> findPostIdsByUserId(Long userId);
 
     @Update("UPDATE post SET content = #{content} WHERE post_id = #{postId}")
@@ -51,7 +56,8 @@ public interface PostMapper {
     @Select("SELECT COUNT(*) FROM post WHERE is_deleted = 0")
     long count();
     
-    @Select("SELECT user_id, SUM(like_count) as totalLikes FROM post WHERE is_deleted = 0 GROUP BY user_id ORDER BY totalLikes DESC LIMIT #{limit}")
+    @Select("SELECT p.user_id, SUM(p.like_count) as totalLikes FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 GROUP BY p.user_id ORDER BY totalLikes DESC LIMIT #{limit}")
     List<UserLikes> countLikesByUserId(@Param("limit") Integer limit);
     
     public static class UserLikes {
@@ -64,9 +70,10 @@ public interface PostMapper {
         public void setTotalLikes(Long totalLikes) { this.totalLikes = totalLikes; }
     }
 
-    @Select("SELECT post_id as postId, user_id as userId, content, post_time as postTime, " +
-            "comment_count as commentCount, like_count as likeCount, is_deleted as isDeleted " +
-            "FROM post WHERE is_deleted = 0 AND content LIKE CONCAT('%', #{keyword}, '%') " +
-            "ORDER BY post_time DESC LIMIT #{limit}")
+    @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.post_time as postTime, " +
+            "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
+            "FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 AND p.content LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY p.post_time DESC LIMIT #{limit}")
     List<Post> searchByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
 }
