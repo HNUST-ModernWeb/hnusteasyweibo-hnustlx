@@ -181,7 +181,7 @@ public class UserServiceImpl implements UserService {
         }
         
         // 更新用户头像路径，返回完整URL
-        String avatarUrl = "http://localhost:8080/upload/avatar/" + fileName;
+        String avatarUrl = "/upload/avatar/" + fileName;
         
         // 保留原来的 username
         String username = currentUser != null ? currentUser.getUsername() : null;

@@ -150,9 +150,9 @@
                   {{ index + 1 }}
                 </span>
                 <img 
-                  :src="user.avatar || 'http://localhost:8080/upload/avatar/default.jpg'" 
+                  :src="user.avatar || '/upload/avatar/default.jpg'" 
                   class="user-avatar"
-                  @error="$event.target.src = 'http://localhost:8080/upload/avatar/default.jpg'"
+                  @error="$event.target.src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'"
                 />
                 <div class="user-info">
                   <span class="user-name">@{{ user.username }}</span>
