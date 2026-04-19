@@ -865,7 +865,7 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .detail-content {
     padding: 0;
   }
@@ -880,6 +880,10 @@ onMounted(() => {
   
   .post-image {
     height: 160px;
+  }
+  
+  .comment-input-bar {
+    padding-bottom: calc(12px + var(--bottom-nav-height));
   }
 }
 </style>
