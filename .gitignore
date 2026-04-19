@@ -1,0 +1,20 @@
+# 敏感配置（需要手动配置，不要提交到 Git）
+backend/weibo_lx-server/src/main/resources/application-prod.yml
+backend/weibo_lx-server/src/main/resources/application-dev.yml
+
+# 构建产物
+backend/target/
+frontend/dist/
+frontend/node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
