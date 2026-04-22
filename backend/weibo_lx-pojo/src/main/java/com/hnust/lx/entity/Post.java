@@ -18,6 +18,7 @@ public class Post implements Serializable {
     private Long postId;
     private Long userId;
     private String content;
+    private String images;
     private LocalDateTime postTime;
     private Integer commentCount;
     private Integer likeCount;

@@ -4,6 +4,7 @@ import com.hnust.lx.dto.*;
 import com.hnust.lx.entity.Post;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.vo.PostVO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -24,4 +25,6 @@ public interface PostService {
     List<Post> getUserPosts(Long userId);
 
     Long getUserTotalLikes(Long userId);
+
+    String uploadPostImage(Long userId, MultipartFile file);
 }

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -20,6 +21,7 @@ public class PostVO implements Serializable {
     private String username;
     private String avatar;
     private String content;
+    private List<String> images;
     private Long likeCount;
     private Long commentCount;
     private LocalDateTime createTime;

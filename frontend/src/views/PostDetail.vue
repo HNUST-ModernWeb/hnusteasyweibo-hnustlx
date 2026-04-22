@@ -127,8 +127,8 @@
       </button>
     </div>
     
-    <div v-if="showPreview" class="image-preview" @click="showPreview = false">
-      <img :src="previewUrl" class="preview-img" @click.stop />
+    <div v-if="showPreview" ref="previewContainer" class="image-preview" @click="closePreview">
+      <img :src="previewUrl" class="preview-img" @click="closePreview" />
     </div>
     
     <div v-if="showTagEditor" class="tag-editor-overlay" @click="showTagEditor = false">
@@ -163,7 +163,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { postApi, commentApi, likeApi, postTagApi, tagApi } from '../api'
 
@@ -176,6 +176,7 @@ const commentText = ref('')
 const showMenu = ref(false)
 const showPreview = ref(false)
 const previewUrl = ref('')
+const previewContainer = ref(null)
 const inputFocused = ref(false)
 const commentInput = ref(null)
 const currentUserId = ref(null)
@@ -315,9 +316,31 @@ const handleDelete = async () => {
   } catch (e) { console.error(e) }
 }
 
-const previewImage = (idx) => {
+const previewImage = async (idx) => {
   previewUrl.value = post.value.images[idx]
   showPreview.value = true
+  await nextTick()
+  if (window.innerWidth >= 768) {
+    const el = previewContainer.value
+    if (el && el.requestFullscreen && !document.fullscreenElement) {
+      try {
+        await el.requestFullscreen()
+      } catch (e) {
+        console.warn('进入全屏失败:', e)
+      }
+    }
+  }
+}
+
+const closePreview = async () => {
+  showPreview.value = false
+  if (document.fullscreenElement) {
+    try {
+      await document.exitFullscreen()
+    } catch (e) {
+      console.warn('退出全屏失败:', e)
+    }
+  }
 }
 
 const sharePost = () => {
@@ -503,12 +526,12 @@ onMounted(() => {
   display: grid;
   gap: 8px;
   margin-bottom: 16px;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .post-image {
   width: 100%;
-  height: 200px;
+  height: 140px;
   object-fit: cover;
   border-radius: 12px;
   cursor: pointer;
@@ -855,12 +878,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 40px;
+  padding: 0;
 }
 
 .preview-img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
   object-fit: contain;
   border-radius: 8px;
 }
@@ -879,7 +902,7 @@ onMounted(() => {
   }
   
   .post-image {
-    height: 160px;
+    height: 110px;
   }
   
   .comment-input-bar {

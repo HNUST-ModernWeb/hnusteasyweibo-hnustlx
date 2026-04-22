@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/post")
@@ -25,6 +26,13 @@ public class PostController {
         Long userId = BaseContext.getCurrentId();
         dto.setUserId(userId);
         return Result.success(postService.addPost(dto));
+    }
+
+    @PostMapping("/image")
+    @Operation(summary = "上传帖子图片", description = "上传帖子图片并返回可访问URL")
+    public Result<String> uploadPostImage(@RequestParam("image") MultipartFile file) {
+        Long userId = BaseContext.getCurrentId();
+        return Result.success(postService.uploadPostImage(userId, file));
     }
 
     @GetMapping("/list")

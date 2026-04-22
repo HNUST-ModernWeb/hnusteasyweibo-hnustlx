@@ -56,14 +56,14 @@
       </button>
     </div>
     
-    <div v-if="showPreview" class="image-preview" @click="showPreview = false">
-      <img :src="previewUrl" class="preview-img" @click.stop />
+    <div v-if="showPreview" ref="previewContainer" class="image-preview" @click="closePreview">
+      <img :src="previewUrl" class="preview-img" @click="closePreview" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { likeApi, postApi, postTagApi } from '../api'
 
@@ -74,6 +74,7 @@ const router = useRouter()
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
 const previewUrl = ref('')
 const showPreview = ref(false)
+const previewContainer = ref(null)
 const postTags = ref([])
 
 const fetchPostTags = async () => {
@@ -140,9 +141,31 @@ const handleDelete = async () => {
   } catch (e) { console.error(e) }
 }
 
-const previewImage = (idx) => {
+const previewImage = async (idx) => {
   previewUrl.value = props.post.images[idx]
   showPreview.value = true
+  await nextTick()
+  if (window.innerWidth >= 768) {
+    const el = previewContainer.value
+    if (el && el.requestFullscreen && !document.fullscreenElement) {
+      try {
+        await el.requestFullscreen()
+      } catch (e) {
+        console.warn('进入全屏失败:', e)
+      }
+    }
+  }
+}
+
+const closePreview = async () => {
+  showPreview.value = false
+  if (document.fullscreenElement) {
+    try {
+      await document.exitFullscreen()
+    } catch (e) {
+      console.warn('退出全屏失败:', e)
+    }
+  }
 }
 
 const share = () => {
@@ -247,27 +270,12 @@ onMounted(() => {
   margin-bottom: 12px;
   border-radius: 8px;
   overflow: hidden;
-}
-
-.post-images:has(.post-image:nth-child(1):last-child) {
-  grid-template-columns: 1fr;
-}
-
-.post-images:has(.post-image:nth-child(2):last-child) {
-  grid-template-columns: 1fr 1fr;
-}
-
-.post-images:has(.post-image:nth-child(3)) {
-  grid-template-columns: 1fr 1fr;
-}
-
-.post-images .post-image:nth-child(3) {
-  grid-column: span 2;
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .post-image {
   width: 100%;
-  height: 160px;
+  height: 120px;
   object-fit: cover;
   transition: transform 0.3s ease;
 }
@@ -346,12 +354,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   z-index: 2000;
-  padding: 40px;
+  padding: 0;
 }
 
 .preview-img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
   object-fit: contain;
   border-radius: 8px;
 }
@@ -363,7 +371,7 @@ onMounted(() => {
   }
   
   .post-image {
-    height: 150px;
+    height: 100px;
   }
 }
 </style>

@@ -34,3 +34,8 @@ pagehelper:
 weibo:
   web:
     upload-path: D:/upload/
+    cors-origins: http://localhost:3000,http://localhost:5173
+
+logging:
+  level:
+    com.hnust.lx: debug
