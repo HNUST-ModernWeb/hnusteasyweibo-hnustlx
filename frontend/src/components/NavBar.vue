@@ -27,13 +27,13 @@
           <span>发布</span>
         </router-link>
         
-        <div class="user-menu" v-if="username">
+        <div class="user-menu" v-if="username" @click.stop>
           <img 
             :src="avatar || defaultAvatar" 
             class="user-avatar" 
-            @click="goProfile"
+            @click="toggleMenu"
           />
-          <div class="dropdown">
+          <div v-if="showMenu" class="dropdown show-menu-dropdown">
             <div class="dropdown-item" @click="goProfile">我的主页</div>
             <div class="dropdown-item" @click="logout">退出登录</div>
           </div>
@@ -52,12 +52,22 @@ const router = useRouter()
 const username = ref('')
 const avatar = ref('')
 const searchKeyword = ref('')
+const showMenu = ref(false)
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+const closeMenu = () => {
+  showMenu.value = false
+}
 
 onMounted(() => {
   username.value = localStorage.getItem('username') || ''
   avatar.value = localStorage.getItem('avatar') || ''
   window.addEventListener('focus', updateAvatar)
+  document.addEventListener('click', closeMenu)
 })
 
 const updateAvatar = () => {
@@ -66,6 +76,7 @@ const updateAvatar = () => {
 
 onUnmounted(() => {
   window.removeEventListener('focus', updateAvatar)
+  document.removeEventListener('click', closeMenu)
 })
 
 const goProfile = () => {
@@ -252,6 +263,18 @@ const doSearch = () => {
   transform: translateY(0);
 }
 
+.user-menu .dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+}
+
+.show-menu-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .dropdown-item {
   padding: 12px 20px;
   font-size: 14px;
@@ -288,14 +311,14 @@ const doSearch = () => {
   }
   
   .publish-btn {
-    padding: 6px 12px;
+    display: none;
   }
   
-  .publish-btn .icon {
-    font-size: 12px;
+  .search-box {
+    margin: 0 15px;
   }
   
-  .publish-btn span:not(.icon) {
+  .logo-text {
     display: none;
   }
 }
