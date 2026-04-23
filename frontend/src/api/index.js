@@ -1,4 +1,4 @@
-﻿import axios from 'axios'
+import axios from 'axios'
 import { notify } from '../utils/notify'
 
 const api = axios.create({
@@ -6,27 +6,23 @@ const api = axios.create({
   timeout: 10000
 })
 
+// 请求拦截器 - 添加token
 api.interceptors.request.use(config => {
   const userToken = localStorage.getItem('token')
-  const adminToken = localStorage.getItem('admin_token')
-
-  if (config.url.includes('/admin/') || config.url.includes('/tag/')) {
-    config.headers['admin_token'] = adminToken || userToken
-  } else {
+  if (userToken) {
     config.headers['user_token'] = userToken
   }
   return config
 })
 
+// 响应拦截器
 api.interceptors.response.use(
   response => response.data,
   error => {
-    const msg = error.response?.data?.msg || '请求失败'
-    const reqUrl = error.config?.url || ''
-    const skipGlobalNotify = ['/user/login', '/admin/login', '/user/register'].some(path => reqUrl.includes(path))
-
-    if (error.response?.status !== 401 && !skipGlobalNotify) {
-      notify.error(msg)
+    if (error.response?.status === 401) {
+      // token失效，跳转登录
+      localStorage.clear()
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }
@@ -102,4 +98,36 @@ export const adminApi = {
 export const searchApi = {
   users: (keyword, limit = 20) => api.get('/search/user', { params: { keyword, limit } }),
   posts: (keyword, limit = 20) => api.get('/search/post', { params: { keyword, limit } })
+}
+
+export const chatApi = {
+  sendPrivate: (data) => api.post('/message/private/send', data),
+  privateList: (userId, params) => api.get(`/message/private/list/${userId}`, { params }),
+  conversations: (params) => api.get('/message/private/conversations', { params }),
+  unreadCount: () => api.get('/message/private/unread-count'),
+  markRead: (data) => api.put('/message/private/mark-read', data),
+  createGroup: (data) => api.post('/group/create', data),
+  groupList: (params) => api.get('/group/list', { params }),
+  joinGroup: (groupId) => api.post(`/group/${groupId}/join`),
+  leaveGroup: (groupId) => api.post(`/group/${groupId}/leave`),
+  groupMembers: (groupId, params) => api.get(`/group/${groupId}/members`, { params }),
+  sendGroupMessage: (groupId, data) => api.post(`/group/${groupId}/message/send`, data),
+  groupMessageList: (groupId, params) => api.get(`/group/${groupId}/message/list`, { params }),
+  inviteToGroup: (groupId, data) => api.post(`/group/${groupId}/invite`, data),
+  pendingInvites: (params) => api.get('/group/invites', { params }),
+  acceptInvite: (inviteId) => api.post('/group/invite/accept', { inviteId }),
+  rejectInvite: (inviteId) => api.post('/group/invite/reject', { inviteId }),
+  inviteCount: () => api.get('/group/invite/count')
+}
+
+export const friendApi = {
+  sendRequest: (userId) => api.post('/friend/request', { userId }),
+  accept: (requestId) => api.post('/friend/accept', { requestId }),
+  reject: (requestId) => api.post('/friend/reject', { requestId }),
+  delete: (userId) => api.delete('/friend/delete', { data: { userId } }),
+  list: (params) => api.get('/friend/list', { params }),
+  requests: (params) => api.get('/friend/requests', { params }),
+  count: () => api.get('/friend/count'),
+  check: (userId) => api.get('/friend/check', { params: { userId } }),
+  isFriend: (userId) => api.get('/friend/check', { params: { userId } })
 }

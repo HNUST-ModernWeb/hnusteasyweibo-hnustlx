@@ -104,32 +104,35 @@ const submit = async () => {
   try {
     if (isLogin.value) {
       const res = await userApi.login(form)
-      const data = res?.data
-
-      if (data?.user) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('userId', String(data.user.userId))
-        localStorage.setItem('username', data.user.username)
-        localStorage.setItem('avatar', data.user.avatar || '')
-      } else if (data?.token) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('userId', String(data.userId))
-        localStorage.setItem('username', data.username || '')
-        localStorage.setItem('avatar', data.avatar || '')
+      console.log('登录响应:', res)
+      
+      // 后端返回格式: { code: 200, data: { userId, username, token, avatar } }
+      // axios返回完整response: res = { data: { code:200, data:{userId,token} } }
+      // 需要res.data.data才能获取userId和token
+      const userData = res?.data
+      console.log('userData:', userData)
+      console.log('token:', userData?.token, 'userId:', userData?.userId)
+      
+      if (userData?.token && userData?.userId) {
+        localStorage.setItem('token', userData.token)
+        localStorage.setItem('userId', String(userData.userId))
+        localStorage.setItem('username', userData.username || '')
+        localStorage.setItem('avatar', userData.avatar || '')
+        notify.success('登录成功，欢迎回来')
+        if (rememberAccount.value) {
+          localStorage.setItem('remember_username', form.username)
+        } else {
+          localStorage.removeItem('remember_username')
+        }
+        failedAttempts.value = 0
+        lockUntil.value = 0
+        setTimeout(() => router.push('/'), 300)
+        return
       } else {
+        console.log('用户数据缺失:', userData)
         notify.error('登录失败，返回数据异常')
         return
       }
-
-      notify.success('登录成功，欢迎回来')
-      if (rememberAccount.value) {
-        localStorage.setItem('remember_username', form.username)
-      } else {
-        localStorage.removeItem('remember_username')
-      }
-      failedAttempts.value = 0
-      lockUntil.value = 0
-      setTimeout(() => router.push('/'), 300)
     } else {
       await userApi.register(form)
       notify.success('注册成功，请登录')
