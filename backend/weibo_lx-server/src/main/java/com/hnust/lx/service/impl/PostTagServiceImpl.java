@@ -41,7 +41,7 @@ public class PostTagServiceImpl implements PostTagService {
         }
 
         postTagMapper.deleteByPostId(dto.getPostId());
-        
+
         if (dto.getTagIds() != null && !dto.getTagIds().isEmpty()) {
             postTagMapper.batchInsert(dto.getPostId(), dto.getTagIds());
         }
@@ -52,7 +52,7 @@ public class PostTagServiceImpl implements PostTagService {
     @Override
     public List<TagVO> getPostTags(Long postId) {
         List<PostTag> postTags = postTagMapper.findByPostId(postId);
-        
+
         List<TagVO> voList = new ArrayList<>();
         for (PostTag pt : postTags) {
             Tag tag = tagMapper.findById(pt.getTagId());
@@ -63,7 +63,7 @@ public class PostTagServiceImpl implements PostTagService {
                         .build());
             }
         }
-        
+
         return voList;
     }
 

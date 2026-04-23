@@ -1,4 +1,4 @@
-﻿package com.hnust.lx.service.impl;
+package com.hnust.lx.service.impl;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;

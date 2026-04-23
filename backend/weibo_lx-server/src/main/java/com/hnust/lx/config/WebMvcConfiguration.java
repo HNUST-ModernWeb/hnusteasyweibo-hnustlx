@@ -101,13 +101,16 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                 .addResourceLocations("file:" + webUploadPath);
     }
 
+    /**
+     * OpenAPI 3 鏂囨。淇℃伅
+     */
     @Bean
     public OpenAPI openAPI() {
-        log.info("Generating OpenAPI docs...");
+        log.info("鍑嗗鐢熸垚鎺ュ彛鏂囨。...");
         return new OpenAPI()
                 .info(new Info()
-                        .title("微博系统接口文档")
+                        .title("寰崥绯荤粺鎺ュ彛鏂囨。")
                         .version("1.0")
-                        .description("微博系统接口文档"));
+                        .description("寰崥绯荤粺鎺ュ彛鏂囨。"));
     }
 }

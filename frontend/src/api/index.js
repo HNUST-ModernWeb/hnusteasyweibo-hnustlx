@@ -1,4 +1,5 @@
-import axios from 'axios'
+﻿import axios from 'axios'
+import { notify } from '../utils/notify'
 
 const api = axios.create({
   baseURL: '/api',
@@ -8,8 +9,7 @@ const api = axios.create({
 api.interceptors.request.use(config => {
   const userToken = localStorage.getItem('token')
   const adminToken = localStorage.getItem('admin_token')
-  
-  // 管理员接口用 admin_token，普通接口用 user_token
+
   if (config.url.includes('/admin/') || config.url.includes('/tag/')) {
     config.headers['admin_token'] = adminToken || userToken
   } else {
@@ -22,8 +22,11 @@ api.interceptors.response.use(
   response => response.data,
   error => {
     const msg = error.response?.data?.msg || '请求失败'
-    if (error.response?.status !== 401) {
-      alert(msg)
+    const reqUrl = error.config?.url || ''
+    const skipGlobalNotify = ['/user/login', '/admin/login', '/user/register'].some(path => reqUrl.includes(path))
+
+    if (error.response?.status !== 401 && !skipGlobalNotify) {
+      notify.error(msg)
     }
     return Promise.reject(error)
   }
