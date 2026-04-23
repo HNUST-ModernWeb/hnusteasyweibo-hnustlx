@@ -18,6 +18,7 @@ CREATE TABLE `user`  (
                          `register_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
                          `user_type` tinyint(1) NULL DEFAULT 0 COMMENT '0普通用�?1管理�?,
                          `is_deleted` tinyint(1) NULL DEFAULT 0 COMMENT '0未删�?1已删�?,
+                          `bio` varchar(200) CHARACTER SET utf8mb4 NULL DEFAULT NULL COMMENT '个人简介',
                          PRIMARY KEY (`user_id`) USING BTREE,
                          UNIQUE INDEX `username`(`username`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COMMENT = '用户�?;
