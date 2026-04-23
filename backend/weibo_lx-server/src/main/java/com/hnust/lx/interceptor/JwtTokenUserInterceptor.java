@@ -27,6 +27,7 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         }
 
         String token = request.getHeader(jwtProperties.getUserTokenName());
+        log.info("JWT拦截器收到请求: {}, token: {}", request.getRequestURI(), token != null ? token.substring(0, 20) + "..." : "null");
 
         try {
             log.info("用户jwt校验:{}", token);

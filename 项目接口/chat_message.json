@@ -1,0 +1,607 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "聊天API接口文档",
+    "description": "对话聊天功能API接口文档，包含私聊和群聊两大模块",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "paths": {
+    "/message/private/send": {
+      "post": {
+        "summary": "发送私信",
+        "tags": ["私聊模块"],
+        "description": "用户发送私信给另一个用户，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["receiverId", "content"],
+                "properties": {
+                  "receiverId": {
+                    "type": "integer",
+                    "description": "接收者用户ID",
+                    "example": 1002
+                  },
+                  "content": {
+                    "type": "string",
+                    "description": "消息内容（1-500字）",
+                    "example": "你好，在忙吗？",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送成功",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/R" },
+                "example": {
+                  "code": 200,
+                  "msg": "发送成功",
+                  "data": {
+                    "messageId": 5001,
+                    "senderId": 1001,
+                    "receiverId": 1002,
+                    "content": "你好，在忙吗？",
+                    "sendTime": "2026-03-02 15:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "参数错误",
+            "examples": {
+              "application/json": {
+                "example": { "code": 400, "msg": "不能给自己发消息", "data": null }
+              }
+            }
+          },
+          "401": {
+            "description": "未授权"
+          },
+          "404": {
+            "description": "用户不存在"
+          }
+        }
+      }
+    },
+    "/message/private/list/{userId}": {
+      "get": {
+        "summary": "获取与某用户的私聊记录",
+        "tags": ["私聊模块"],
+        "description": "分页获取与指定用户的私聊记录，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "对方用户ID",
+            "example": 1002
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 },
+            "description": "页码，默认1"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 },
+            "description": "每页条数，默认20"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 50,
+                    "records": [
+                      {
+                        "messageId": 5001,
+                        "senderId": 1001,
+                        "receiverId": 1002,
+                        "content": "你好",
+                        "isRead": 1,
+                        "sendTime": "2026-03-02 15:30:00"
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 20,
+                    "pages": 3
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/message/private/conversations": {
+      "get": {
+        "summary": "私聊会话列表",
+        "tags": ["私聊模块"],
+        "description": "获取当前用户的所有私聊会话列表，按最后消息时间倒序，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 5,
+                    "records": [
+                      {
+                        "userId": 1002,
+                        "username": "weibo_user2",
+                        "avatar": "http://localhost:8080/upload/avatar/1002.jpg",
+                        "lastMessage": "晚上一起吃饭？",
+                        "lastMessageTime": "2026-03-02 15:30:00",
+                        "unreadCount": 2
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/message/private/unread-count": {
+      "get": {
+        "summary": "获取未读私信总数",
+        "tags": ["私聊模块"],
+        "description": "获取当前用户所有未读私信数量，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": 5
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/message/private/mark-read": {
+      "put": {
+        "summary": "标记私信已读",
+        "tags": ["私聊模块"],
+        "description": "将指定用户发来的消息标记为已读，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["userId"],
+                "properties": {
+                  "userId": {
+                    "type": "integer",
+                    "description": "对方用户ID",
+                    "example": 1002
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "操作成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "标记成功",
+                  "data": 3
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/group/create": {
+      "post": {
+        "summary": "创建群聊",
+        "tags": ["群聊模块"],
+        "description": "用户创建一个新的群聊，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["groupName"],
+                "properties": {
+                  "groupName": {
+                    "type": "string",
+                    "description": "群名称（1-50字）",
+                    "example": "技术交流群",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "avatar": {
+                    "type": "string",
+                    "description": "群头像URL（可选）",
+                    "nullable": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "创建成功",
+                  "data": {
+                    "groupId": 6001,
+                    "groupName": "技术交流群",
+                    "avatar": null,
+                    "createTime": "2026-03-02 15:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "参数错误" },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/group/list": {
+      "get": {
+        "summary": "我加入的群聊列表",
+        "tags": ["群聊模块"],
+        "description": "获取当前用户加入���所���群聊，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": { "type": "integer", "default": 10 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 3,
+                    "records": [
+                      {
+                        "groupId": 6001,
+                        "groupName": "技术交流群",
+                        "avatar": null,
+                        "memberCount": 25,
+                        "lastMessage": "今天讨论什么话题？",
+                        "lastMessageTime": "2026-03-02 15:30:00"
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 10
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" }
+        }
+      }
+    },
+    "/group/{groupId}/join": {
+      "post": {
+        "summary": "加入群聊",
+        "tags": ["群聊模块"],
+        "description": "用户加入一个群聊，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 6001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "加入成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "加入成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "400": { "description": "已在群中" },
+          "401": { "description": "未授权" },
+          "404": { "description": "群不存在" }
+        }
+      }
+    },
+    "/group/{groupId}/leave": {
+      "post": {
+        "summary": "退出群聊",
+        "tags": ["群聊模块"],
+        "description": "用户退出一个群聊，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 6001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "退出成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "退出成功",
+                  "data": null
+                }
+              }
+            }
+          },
+          "400": { "description": "群主不能退出" },
+          "401": { "description": "未授权" },
+          "404": { "description": "不在群中" }
+        }
+      }
+    },
+    "/group/{groupId}/members": {
+      "get": {
+        "summary": "群成员列表",
+        "tags": ["群聊模块"],
+        "description": "获取群聊的成员列表，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 6001
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 25,
+                    "records": [
+                      {
+                        "userId": 1001,
+                        "username": "weibo_user1",
+                        "avatar": "http://localhost:8080/upload/avatar/1001.jpg",
+                        "role": 2,
+                        "joinTime": "2026-03-01 10:00:00"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "未授权" },
+          "404": { "description": "群不存在" }
+        }
+      }
+    },
+    "/group/{groupId}/message/send": {
+      "post": {
+        "summary": "发送群消息",
+        "tags": ["群聊模块"],
+        "description": "在群聊中发送消息，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 6001
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "消息内容（1-500字）",
+                    "example": "大家好！",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "发送成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "发送成功",
+                  "data": {
+                    "messageId": 7001,
+                    "groupId": 6001,
+                    "senderId": 1001,
+                    "content": "大家好！",
+                    "sendTime": "2026-03-02 15:30:00"
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "不在群中" },
+          "401": { "description": "未授权" },
+          "404": { "description": "群不存在" }
+        }
+      }
+    },
+    "/group/{groupId}/message/list": {
+      "get": {
+        "summary": "群消息记录",
+        "tags": ["群聊模块"],
+        "description": "分页获取群聊的消息记录，需携带Token鉴权",
+        "security": [{ "tokenAuth": [] }],
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "example": 6001
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": { "type": "integer", "default": 1 }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": { "type": "integer", "default": 20 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "获取成功",
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": 200,
+                  "msg": "获取成功",
+                  "data": {
+                    "total": 100,
+                    "records": [
+                      {
+                        "messageId": 7001,
+                        "senderId": 1001,
+                        "senderName": "weibo_user1",
+                        "senderAvatar": "http://localhost:8080/upload/avatar/1001.jpg",
+                        "content": "大家好！",
+                        "sendTime": "2026-03-02 15:30:00"
+                      }
+                    ],
+                    "page": 1,
+                    "pageSize": 20,
+                    "pages": 5
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "不在群中" },
+          "401": { "description": "未授权" },
+          "404": { "description": "群不存在" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "R": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer" },
+          "msg": { "type": "string" },
+          "data": { "type": "object" }
+        }
+      }
+    },
+    "securitySchemes": {
+      "tokenAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "JWT Token"
+      }
+    }
+  }
+}

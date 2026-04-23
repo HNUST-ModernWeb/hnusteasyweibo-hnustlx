@@ -74,7 +74,10 @@ public class WebMvcConfiguration implements WebMvcConfigurer {
                         "/comment/received",
                         "/like/toggle",
                         "/like/my-list",
-                        "/like/received"
+                        "/like/received",
+                        "/message/**",
+                        "/group/**",
+                        "/friend/**"
                 )
                 .excludePathPatterns(
                         "/user/register",

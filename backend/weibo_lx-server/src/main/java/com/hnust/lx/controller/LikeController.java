@@ -45,11 +45,14 @@ public class LikeController {
     }
 
     @GetMapping("/received")
-    @Operation(summary = "获取我收到的点赞", description = "分页获取别人点赞我的帖子的列表")
+    @Operation(summary = "获取我收到的点赞", description = "分页获取别人点赞我的帖子")
     public Result<PageResult> getReceivedLikes(
             @RequestParam(name = "page", defaultValue = "1") Long page,
-            @RequestParam(name = "pageSize", defaultValue = "10") Long pageSize) {
+            @RequestParam(name = "pageSize", defaultValue = "20") Long pageSize) {
         Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
         return Result.success(likeService.getReceivedLikes(userId, page, pageSize));
     }
 }

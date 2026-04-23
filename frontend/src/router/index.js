@@ -7,6 +7,9 @@ import Profile from '../views/Profile.vue'
 import Search from '../views/Search.vue'
 import Discover from '../views/Discover.vue'
 import Messages from '../views/Messages.vue'
+import PrivateChat from '../views/PrivateChat.vue'
+import GroupChat from '../views/GroupChat.vue'
+import Friends from '../views/Friends.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminLayout from '../components/AdminLayout.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
@@ -22,6 +25,9 @@ const routes = [
   { path: '/search', name: 'Search', component: Search },
   { path: '/discover', name: 'Discover', component: Discover },
   { path: '/messages', name: 'Messages', component: Messages, meta: { requiresAuth: true } },
+  { path: '/friends', name: 'Friends', component: Friends, meta: { requiresAuth: true } },
+  { path: '/chat/private/:userId', name: 'PrivateChat', component: PrivateChat, meta: { requiresAuth: true } },
+  { path: '/chat/group/:groupId', name: 'GroupChat', component: GroupChat, meta: { requiresAuth: true } },
   
   { path: '/admin/login', name: 'AdminLogin', component: AdminLogin },
   {
