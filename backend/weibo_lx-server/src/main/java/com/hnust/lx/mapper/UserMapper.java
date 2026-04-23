@@ -8,25 +8,25 @@ import java.util.List;
 @Mapper
 public interface UserMapper {
 
-    @Insert("INSERT INTO user(username, password, avatar, user_type, is_deleted) " +
-            "VALUES(#{username}, #{password}, #{avatar}, #{userType}, #{isDeleted})")
+    @Insert("INSERT INTO user(username, password, avatar, user_type, is_deleted, bio) " +
+            "VALUES(#{username}, #{password}, #{avatar}, #{userType}, #{isDeleted}, #{bio})")
     @Options(useGeneratedKeys = true, keyProperty = "userId")
     int insert(User user);
 
     @Select("SELECT user_id as userId, username, password, avatar, register_time as registerTime, " +
-            "user_type as userType, is_deleted as isDeleted FROM user WHERE username = #{username}")
+            "user_type as userType, is_deleted as isDeleted, bio FROM user WHERE username = #{username}")
     User findByUsername(String username);
 
     @Select("SELECT user_id as userId, username, password, avatar, register_time as registerTime, " +
-            "user_type as userType, is_deleted as isDeleted FROM user WHERE user_id = #{userId}")
+            "user_type as userType, is_deleted as isDeleted, bio FROM user WHERE user_id = #{userId}")
     User findById(Long userId);
 
     @Select("SELECT user_id as userId, username, password, avatar, register_time as registerTime, " +
-            "user_type as userType, is_deleted as isDeleted FROM user WHERE is_deleted = 0 " +
+            "user_type as userType, is_deleted as isDeleted, bio FROM user WHERE is_deleted = 0 " +
             "ORDER BY register_time DESC")
     List<User> findAll();
 
-    @Update("UPDATE user SET username = #{username}, avatar = #{avatar} WHERE user_id = #{userId}")
+    @Update("UPDATE user SET username = #{username}, avatar = #{avatar}, bio = #{bio} WHERE user_id = #{userId}")
     int update(User user);
 
     @Update("UPDATE user SET is_deleted = #{isDeleted} WHERE user_id = #{userId}")
@@ -36,7 +36,7 @@ public interface UserMapper {
     int delete(Long userId);
 
     @Select("SELECT user_id as userId, username, password, avatar, register_time as registerTime, " +
-            "user_type as userType, is_deleted as isDeleted FROM user WHERE is_deleted = 0 " +
+            "user_type as userType, is_deleted as isDeleted, bio FROM user WHERE is_deleted = 0 " +
             "AND username LIKE CONCAT('%', #{keyword}, '%') LIMIT #{limit}")
     List<User> searchByKeyword(@Param("keyword") String keyword, @Param("limit") Integer limit);
 }

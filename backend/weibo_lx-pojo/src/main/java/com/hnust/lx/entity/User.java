@@ -22,4 +22,5 @@ public class User implements Serializable {
     private LocalDateTime registerTime;
     private Integer userType;
     private Integer isDeleted;
+    private String bio;
 }

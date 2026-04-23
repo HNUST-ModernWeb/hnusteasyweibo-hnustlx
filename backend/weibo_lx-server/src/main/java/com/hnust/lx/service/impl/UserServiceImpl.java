@@ -59,18 +59,18 @@ public class UserServiceImpl implements UserService {
                 .avatar(dto.getAvatar())
                 .userType(0)
                 .isDeleted(0)
+                .bio(null)
                 .build();
         userMapper.insert(user);
         
         String token = generateToken(user.getUserId(), user.getUserType());
-        return UserVO.builder()
+return UserVO.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
                 .avatar(user.getAvatar())
                 .createTime(user.getRegisterTime())
-                .userType(user.getUserType())
-                .status(1)
-                .token(token)
+                .status(user.getIsDeleted() == 0 ? 1 : 0)
+                .bio(user.getBio())
                 .build();
     }
 
@@ -90,8 +90,8 @@ public class UserServiceImpl implements UserService {
                 .username(user.getUsername())
                 .avatar(user.getAvatar())
                 .createTime(user.getRegisterTime())
-                .userType(user.getUserType())
                 .status(user.getIsDeleted() == 0 ? 1 : 0)
+                .bio(user.getBio())
                 .token(token)
                 .build();
     }
@@ -108,6 +108,7 @@ public class UserServiceImpl implements UserService {
                 .avatar(user.getAvatar())
                 .createTime(user.getRegisterTime())
                 .status(user.getIsDeleted() == 0 ? 1 : 0)
+                .bio(user.getBio())
                 .build();
     }
 
@@ -122,11 +123,13 @@ public class UserServiceImpl implements UserService {
         // 2. 只更新非空的字段
         String username = dto.getUsername() != null ? dto.getUsername() : currentUser.getUsername();
         String avatar = dto.getAvatar() != null ? dto.getAvatar() : currentUser.getAvatar();
+        String bio = dto.getBio() != null ? dto.getBio() : currentUser.getBio();
         
         User user = User.builder()
                 .userId(userId)
                 .username(username)
                 .avatar(avatar)
+                .bio(bio)
                 .build();
         userMapper.update(user);
         return getUserInfo(userId);

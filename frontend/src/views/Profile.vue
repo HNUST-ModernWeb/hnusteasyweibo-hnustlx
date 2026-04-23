@@ -16,7 +16,7 @@
       <img :src="userInfo.avatar || defaultAvatar" class="profile-avatar" />
       <div class="user-details">
         <h1 class="username">{{ userInfo.username }}</h1>
-        <p class="bio">这个人很懒，什么都没写~</p>
+        <p class="bio">{{ userInfo.bio || '这个人很懒，什么都没写~' }}</p>
       </div>
       <button v-if="isOwner" class="edit-btn" @click="showEdit = true">编辑资料</button>
     </div>
@@ -106,6 +106,11 @@
             <input id="avatar-upload-input" type="file" accept="image/*" style="display: none;" @change="handleAvatarChange" />
           </div>
         </div>
+        <div class="form-group">
+          <label for="bio">个人简介</label>
+          <textarea id="bio" name="bio" v-model="editForm.bio" maxlength="200" placeholder="说点什么介绍自己" rows="3" style="width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 15px; color: var(--text); background: var(--bg-card); resize: vertical; box-sizing: border-box; font-family: inherit; line-height: 1.5;" />
+          <span class="char-count">{{ editForm.bio?.length || 0 }}/200</span>
+        </div>
         <div class="modal-actions">
           <button class="cancel-btn" @click="showEdit = false">取消</button>
           <button class="save-btn" @click="saveProfile">保存</button>
@@ -119,6 +124,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { userApi, postApi, likeApi } from '../api'
+import { notify } from '../utils/notify'
 import NavBar from '../components/NavBar.vue'
 import PostItem from '../components/PostItem.vue'
 
@@ -131,7 +137,7 @@ const likes = ref([])
 const loading = ref(false)
 const activeTab = ref('post')
 const showEdit = ref(false)
-const editForm = ref({ username: '', avatar: '' })
+const editForm = ref({ username: '', avatar: '', bio: '' })
 
 const defaultAvatar = 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
 const stats = ref({ postCount: 0, likeCount: 0, commentCount: 0 })
@@ -214,7 +220,12 @@ const saveProfile = async () => {
     
     // 只在 username 有修改时调用 update
     if (hasUsernameChange) {
-      await userApi.update({ username: editForm.value.username })
+      await userApi.update({ 
+        username: editForm.value.username, 
+        bio: editForm.value.bio 
+      })
+    } else if (editForm.value.bio !== undefined) {
+      await userApi.update({ bio: editForm.value.bio })
     }
     
     // 只在选择了新头像时上传
@@ -231,10 +242,10 @@ const saveProfile = async () => {
     
     showEdit.value = false
     fetchUserInfo()
-    alert('保存成功')
+    notify.success('保存成功')
   } catch (e) { 
     console.error(e)
-    alert('保存失败')
+    notify.error('保存失败')
   }
 }
 
@@ -718,5 +729,13 @@ onMounted(() => {
     top: -60px;
     right: 20px;
   }
+}
+
+.char-count {
+  display: block;
+  text-align: right;
+  font-size: 12px;
+  color: var(--text-light);
+  margin-top: 4px;
 }
 </style>
