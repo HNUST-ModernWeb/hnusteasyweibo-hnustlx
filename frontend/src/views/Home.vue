@@ -586,6 +586,9 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: sticky;
+  top: 70px;
+  height: fit-content;
 }
 
 .sidebar-section {
