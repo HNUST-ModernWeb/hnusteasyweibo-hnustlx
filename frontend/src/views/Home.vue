@@ -44,31 +44,7 @@
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="tag-filter-bar">
-            <span 
-              :class="['filter-tag', { active: selectedTagId === null }]"
-              @click="selectTag(null)"
-            >
-              全部
-            </span>
-            <span 
-              v-for="tag in displayTags" 
-              :key="tag.tagId"
-              :class="['filter-tag', { active: selectedTagId === tag.tagId }]"
-              @click="selectTag(tag.tagId)"
-            >
-              #{{ tag.tagName }}
-            </span>
-            <span 
-              v-if="hotTags.length > maxDisplayTags" 
-              class="filter-tag more-btn"
-              @click="showMoreTags = !showMoreTags"
-            >
-              {{ showMoreTags ? '收起' : `更多(${hotTags.length - maxDisplayTags})` }}
-            </span>
-          </div>
+</div>
           
           <div class="post-list">
             <PostItem 
