@@ -114,7 +114,7 @@
         <aside class="sidebar">
           <div class="sidebar-section">
             <h3 class="section-title">热门标签</h3>
-            <div class="tag-list">
+            <div class="tag-grid">
               <span 
                 v-for="tag in displaySidebarTags" 
                 :key="tag.tagId" 
@@ -125,11 +125,11 @@
               </span>
             </div>
             <div 
-              v-if="hotTags.length > 10" 
+              v-if="hotTags.length > 9" 
               class="show-more"
               @click="showAllSidebarTags = !showAllSidebarTags"
             >
-              {{ showAllSidebarTags ? '收起' : `展开更多 (${hotTags.length - 10})` }}
+              {{ showAllSidebarTags ? '收起' : `更多 (+${hotTags.length - 9})` }}
             </div>
           </div>
           
@@ -611,6 +611,18 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tag-grid .tag-item {
+  text-align: center;
+  padding: 8px 4px;
+  font-size: 12px;
 }
 
 .tag-item {
