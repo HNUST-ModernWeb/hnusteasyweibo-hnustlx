@@ -561,16 +561,18 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   position: sticky;
   top: 70px;
   height: fit-content;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
 }
 
 .sidebar-section {
   background: var(--bg-card);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: 12px;
   box-shadow: var(--shadow);
 }
 
@@ -592,13 +594,13 @@ onUnmounted(() => {
 .tag-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .tag-grid .tag-item {
   text-align: center;
-  padding: 8px 4px;
-  font-size: 12px;
+  padding: 4px 2px;
+  font-size: 11px;
 }
 
 .tag-item {
