@@ -21,8 +21,8 @@ public interface PostMapper {
 
     @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.images, p.post_time as postTime, " +
             "p.comment_count as commentCount, p.like_count as likeCount, p.is_deleted as isDeleted " +
-            "FROM post p JOIN user u ON p.user_id = u.user_id " +
-            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 ORDER BY p.post_time DESC")
+"FROM post p JOIN user u ON p.user_id = u.user_id " +
+            "WHERE p.is_deleted = 0 AND u.is_deleted = 0 ORDER BY p.like_count DESC, p.post_time DESC")
     List<Post> findByPage();
 
     @Select("SELECT p.post_id as postId, p.user_id as userId, p.content, p.images, p.post_time as postTime, " +
