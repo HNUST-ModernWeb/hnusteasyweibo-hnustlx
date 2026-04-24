@@ -73,13 +73,13 @@ const hotTags = ref([])
 
 const fetchHotData = async () => {
   try {
-    const postsRes = await postApi.list({ page: 1, pageSize: 10 })
+    const postsRes = await postApi.list({ page: 1, pageSize: 5 })
     hotPosts.value = postsRes.data?.records || []
     
     const usersRes = await userApi.getHot(6)
     hotUsers.value = usersRes.data || []
     
-    const tagsRes = await tagApi.getHot(15)
+    const tagsRes = await tagApi.getHot(9)
     hotTags.value = tagsRes.data || []
   } catch (e) {
     console.error('获取热门数据失败:', e)

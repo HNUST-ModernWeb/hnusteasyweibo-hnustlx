@@ -17,6 +17,11 @@
       </div>
       
       <div class="nav-actions">
+        <router-link to="/discover" class="discover-link">
+          <span class="icon">🔍</span>
+          <span>发现</span>
+        </router-link>
+        
         <router-link to="/messages" class="message-link">
           <span class="icon">💬</span>
           <span>消息</span>
@@ -189,6 +194,30 @@ const doSearch = () => {
   font-size: 14px;
   font-weight: 500;
   transition: all 0.3s ease;
+}
+
+.discover-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #1890ff;
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.discover-link:hover {
+  background: #40a9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(24, 144, 255, 0.4);
+}
+
+.discover-link .icon {
+  font-size: 14px;
 }
 
 .message-link {

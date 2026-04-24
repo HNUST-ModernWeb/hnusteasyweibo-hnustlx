@@ -178,7 +178,7 @@ const router = useRouter()
 const posts = ref([])
 const loading = ref(false)
 const page = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(5)
 const totalRecords = ref(0)
 const hasMore = ref(true)
 const hotTags = ref([])
@@ -188,7 +188,7 @@ const showAllSidebarTags = ref(false)
 const showTagDropdown = ref(false)
 const allTags = ref([])
 const tagDropdownRef = ref(null)
-const maxDisplayTags = 7
+const maxDisplayTags = 9
 const hotUsers = ref([])
 
 const displayTags = computed(() => {
@@ -296,7 +296,7 @@ const goTag = (tagId) => {
 
 const fetchSidebarData = async () => {
   try {
-    const tagsRes = await tagApi.getHot(15)
+    const tagsRes = await tagApi.getHot(9)
     hotTags.value = tagsRes.data || []
     
     const usersRes = await userApi.getHot(5)
