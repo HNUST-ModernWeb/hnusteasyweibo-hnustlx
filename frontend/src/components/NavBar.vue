@@ -343,6 +343,10 @@ const doSearch = () => {
     display: none;
   }
   
+  .discover-link {
+    display: none;
+  }
+  
   .search-box {
     margin: 0 15px;
   }
