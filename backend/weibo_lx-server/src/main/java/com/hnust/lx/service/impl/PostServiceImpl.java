@@ -14,6 +14,7 @@ import com.hnust.lx.mapper.PostMapper;
 import com.hnust.lx.mapper.UserMapper;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.PostService;
+import com.hnust.lx.service.WebSocketNotificationService;
 import com.hnust.lx.vo.PostVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +36,10 @@ public class PostServiceImpl implements PostService {
     private static final String POST_IMAGE_PREFIX = "/upload/post/";
     private static final List<String> ALLOWED_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp", ".gif");
 
-    private final PostMapper postMapper;
+private final PostMapper postMapper;
     private final UserMapper userMapper;
     private final JacksonObjectMapper objectMapper;
+    private final WebSocketNotificationService notificationService;
 
     @Value("${weibo.web.upload-path}")
     private String uploadPath;
@@ -54,10 +56,14 @@ public class PostServiceImpl implements PostService {
                 .likeCount(0)
                 .isDeleted(0)
                 .build();
-        postMapper.insert(post);
+postMapper.insert(post);
 
         Post saved = postMapper.findById(post.getPostId());
-        return buildPostVO(saved != null ? saved : post);
+        PostVO vo = buildPostVO(saved != null ? saved : post);
+        
+        notificationService.broadcastPostUpdate(java.util.Map.of("type", "new_post", "post", vo));
+        
+        return vo;
     }
 
     @Override

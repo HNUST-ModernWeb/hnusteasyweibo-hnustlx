@@ -5,24 +5,30 @@
     <main class="chat-container">
       <div class="chat-header">
         <button class="back-btn" @click="goBack">←</button>
-        <h2>{{ groupName }}</h2>
+        <div class="group-title">
+          <img :src="groupAvatar || defaultGroupAvatar" class="group-avatar" @click="showAvatarModal = true" />
+          <h2>{{ groupName }}</h2>
+        </div>
         <button class="info-btn" @click="showMembers = !showMembers">👥</button>
         <button class="invite-btn" @click="toggleInvite">邀请</button>
       </div>
       
       <div ref="messagesContainer" class="messages-wrapper">
-        <div 
-          v-for="msg in messages" 
-          :key="msg.messageId"
-          class="message-item"
-        >
-          <img :src="msg.senderAvatar || defaultAvatar" class="avatar" />
-          <div class="message-info">
-            <span class="sender-name">{{ msg.senderName }}</span>
-            <div class="bubble-content">{{ msg.content }}</div>
-            <span class="message-time">{{ formatTime(msg.sendTime) }}</span>
+        <template v-for="(msg, index) in messages" :key="msg.messageId">
+          <div v-if="index > 0 && showTimeDivider(msg.sendTime, messages[index - 1].sendTime)" class="time-divider">
+            {{ formatFullTime(msg.sendTime) }}
           </div>
-        </div>
+          <div 
+            :class="['message-bubble', { mine: msg.senderId === currentUserId }]"
+          >
+            <img v-if="msg.senderId !== currentUserId" :src="msg.senderAvatar || defaultAvatar" class="avatar" />
+            <div class="message-body">
+              <span v-if="msg.senderId !== currentUserId" class="sender-name">{{ msg.senderName }}</span>
+              <div class="bubble-content">{{ msg.content }}</div>
+            </div>
+            <img v-if="msg.senderId === currentUserId" :src="msg.senderAvatar || defaultAvatar" class="avatar" />
+          </div>
+        </template>
         
         <div v-if="messages.length === 0" class="empty-state">
           <p>群聊暂无消息</p>
@@ -60,7 +66,18 @@
     <!-- 邀请好友 -->
     <div v-if="showInviteFriends" class="members-panel" @click.self="showInviteFriends = false">
       <div class="members-list">
-        <h3>邀请好友进群</h3>
+        <h3>群成员 ({{ memberCount }})</h3>
+        <div 
+          v-for="member in members" 
+          :key="member.userId"
+          class="member-item"
+        >
+          <img :src="member.avatar || defaultAvatar" class="avatar" />
+          <span>{{ member.username }}</span>
+          <span v-if="member.role === 2" class="owner-tag">群主</span>
+        </div>
+        
+        <h3 style="margin-top: 20px">可邀请好友</h3>
         <div 
           v-for="friend in allFriends" 
           :key="friend.userId"
@@ -69,18 +86,50 @@
         >
           <img :src="friend.avatar || defaultAvatar" class="avatar" />
           <span>{{ friend.username }}</span>
+          <span class="invite-hint">邀请</span>
         </div>
-        <p v-if="allFriends.length === 0" class="empty-tip">暂无好友</p>
+        <p v-if="allFriends.length === 0" class="empty-tip">暂无可邀请的好友</p>
+      </div>
+    </div>
+
+    <!-- 修改群头像 -->
+    <div v-if="showAvatarModal" class="members-panel" @click.self="showAvatarModal = false">
+      <div class="members-list">
+        <h3>修改群头像</h3>
+        <div class="avatar-picker-section">
+          <img :src="selectedAvatar || groupAvatar || defaultGroupAvatar" class="current-avatar" />
+          <label class="upload-avatar-btn">
+            <input type="file" accept="image/*" @change="handleAvatarUpload" />
+            上传图片
+          </label>
+        </div>
+        <p class="divider-text">或选择预设头像</p>
+        <div class="avatar-grid">
+          <img 
+            v-for="avatar in avatarOptions" 
+            :key="avatar"
+            :src="avatar"
+            class="avatar-option"
+            :class="{ selected: selectedAvatar === avatar }"
+            @click="selectedAvatar = avatar"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="showAvatarModal = false">取消</button>
+          <button class="save-btn" @click="updateGroupAvatar">保存</button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { chatApi, friendApi } from '../api'
+import api from '../api'
 import { notify } from '../utils/notify'
+import { wsService } from '../utils/websocket'
 import NavBar from '../components/NavBar.vue'
 
 const router = useRouter()
@@ -93,9 +142,25 @@ const messages = ref([])
 const members = ref([])
 const groupName = ref('')
 const memberCount = ref(0)
+const currentUserId = ref(null)
 const showMembers = ref(false)
 const showInviteFriends = ref(false)
 const allFriends = ref([])
+const groupSubscription = ref(null)
+const showAvatarModal = ref(false)
+const selectedAvatar = ref('')
+const groupAvatar = ref('')
+const defaultGroupAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=group'
+const avatarOptions = [
+  'https://api.dicebear.com/7.x/identicon/svg?seed=family',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=team',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=work',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=study',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=sport',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=game',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=music',
+  'https://api.dicebear.com/7.x/identicon/svg?seed=travel',
+]
 
 const groupId = computed(() => parseInt(route.params.groupId))
 
@@ -103,6 +168,7 @@ const fetchMessages = async () => {
   try {
     const res = await chatApi.groupMessageList(groupId.value, { page: 1, pageSize: 50 })
     messages.value = res.data?.records || []
+    console.log('获取消息:', messages.value.length, messages.value.map(m => ({ id: m.messageId, time: m.sendTime })))
     scrollToBottom()
   } catch (e) {
     console.error('获取消息失败:', e)
@@ -111,14 +177,20 @@ const fetchMessages = async () => {
 
 const fetchGroupInfo = async () => {
   try {
-    const res = await chatApi.groupMembers(groupId.value, { page: 1, pageSize: 1 })
-    members.value = res.data?.records || []
-    memberCount.value = res.data?.total || 0
-    groupName.value = '群聊'
+    const infoRes = await chatApi.getGroupInfo(groupId.value)
+    const info = infoRes.data
+    groupName.value = info?.groupName || '群聊'
+    groupAvatar.value = info?.avatar || defaultGroupAvatar
   } catch (e) {
     console.error('获取群信息失败:', e)
   }
 }
+
+watch(showMembers, (val) => {
+  if (val && members.value.length === 0) {
+    fetchMembers()
+  }
+})
 
 const fetchMembers = async () => {
   try {
@@ -135,9 +207,10 @@ const sendGroupMessage = async () => {
   try {
     await chatApi.sendGroupMessage(groupId.value, { content: inputMessage.value.trim() })
     inputMessage.value = ''
-    fetchMessages()
+    await fetchMessages()
+    nextTick(scrollToBottom)
   } catch (e) {
-    console.error('发送消息失败:', e)
+    notify.error('发送失败: ' + (e.response?.data?.msg || e.message))
   }
 }
 
@@ -152,8 +225,14 @@ const leaveGroup = async () => {
 
 const fetchFriends = async () => {
   try {
-    const res = await friendApi.list({ page: 1, pageSize: 50 })
-    allFriends.value = res.data?.records || []
+    const [friendsRes, membersRes] = await Promise.all([
+      friendApi.list({ page: 1, pageSize: 50 }),
+      chatApi.groupMembers(groupId.value, { page: 1, pageSize: 100 })
+    ])
+    const friends = friendsRes.data?.records || []
+    const members = membersRes.data?.records || []
+    const memberIds = members.map(m => m.userId)
+    allFriends.value = friends.filter(f => !memberIds.includes(f.userId))
   } catch (e) {
     console.error('获取好友列表失败:', e)
   }
@@ -176,6 +255,45 @@ const toggleInvite = async () => {
   }
 }
 
+const updateGroupAvatar = async () => {
+  if (selectedAvatar.value && selectedAvatar.value.startsWith('data:')) {
+    const formData = new FormData()
+    const res = await fetch(selectedAvatar.value)
+    const blob = await res.blob()
+    formData.append('avatar', blob, 'avatar.jpg')
+    try {
+      const avatarRes = await api.post(`/group/${groupId.value}/avatar`, formData)
+      groupAvatar.value = avatarRes.data || avatarRes
+      notify.success('群头像已更新')
+    } catch (e) {
+      notify.error(e.response?.data?.msg || '上传失败')
+    }
+  } else if (selectedAvatar.value) {
+    try {
+      await chatApi.updateGroup(groupId.value, { 
+        groupName: groupName.value, 
+        avatar: selectedAvatar.value 
+      })
+      groupAvatar.value = selectedAvatar.value
+      notify.success('群头像已更新')
+    } catch (e) {
+      notify.error(e.response?.data?.msg || '更新失败')
+    }
+  }
+  showAvatarModal.value = false
+}
+
+const handleAvatarUpload = async (e) => {
+  const file = e.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      selectedAvatar.value = event.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -184,9 +302,49 @@ const scrollToBottom = () => {
   })
 }
 
+const handleGroupMessage = (data) => {
+  messages.value.push({
+    messageId: data.messageId,
+    groupId: data.groupId,
+    senderId: data.senderId,
+    senderName: data.senderName,
+    senderAvatar: data.senderAvatar,
+    content: data.content,
+    sendTime: data.sendTime
+  })
+  scrollToBottom()
+}
+
 const formatTime = (time) => {
   if (!time) return ''
-  return time.split('T')[1]?.slice(0, 5) || ''
+  const str = String(time)
+  return str.includes('T') ? str.split('T')[1]?.slice(0, 5) : str.substring(11, 16)
+}
+
+const formatFullTime = (time) => {
+  if (!time) return ''
+  const str = String(time).replace(' ', 'T')
+  const date = new Date(str)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  if (msgDate.getTime() === today.getTime()) {
+    return String(time).includes('T') 
+      ? String(time).split('T')[1]?.slice(0, 5) 
+      : String(time).substring(11, 16)
+  }
+  return String(time).includes('T')
+    ? String(time).replace('T', ' ').substring(0, 16)
+    : String(time).substring(0, 16)
+}
+
+const showTimeDivider = (time, prevTime) => {
+  if (!time || !prevTime) return false
+  const t1 = new Date(String(time).replace(' ', 'T')).getTime()
+  const t2 = new Date(String(prevTime).replace(' ', 'T')).getTime()
+  const diff = t1 - t2
+  if (diff > 60000) console.log('显示时间分割线:', time, prevTime, diff)
+  return diff > 60000
 }
 
 const goBack = () => {
@@ -194,8 +352,18 @@ const goBack = () => {
 }
 
 onMounted(async () => {
+  currentUserId.value = parseInt(localStorage.getItem('userId') || 0)
   await fetchGroupInfo()
   await fetchMessages()
+  groupSubscription.value = wsService.subscribeGroup(groupId.value)
+  wsService.on('group_message_' + groupId.value, handleGroupMessage)
+})
+
+onUnmounted(() => {
+  if (groupSubscription.value) {
+    wsService.unsubscribe(groupSubscription.value)
+  }
+  wsService.off('group_message_' + groupId.value, handleGroupMessage)
 })
 </script>
 
@@ -245,23 +413,33 @@ onMounted(async () => {
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.message-item {
+.message-bubble {
   display: flex;
-  gap: 10px;
   align-items: flex-start;
+  gap: 8px;
+  max-width: 75%;
+}
+
+.message-bubble.mine {
+  align-self: flex-end;
+  flex-direction: row;
+}
+
+.message-bubble:not(.mine) {
+  align-self: flex-start;
 }
 
 .avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.message-info {
+.message-body {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -279,18 +457,33 @@ onMounted(async () => {
   border-radius: 16px;
   font-size: 14px;
   color: var(--text);
-  max-width: 240px;
   word-break: break-word;
 }
 
-.message-time {
-  font-size: 11px;
+.message-bubble.mine .bubble-content {
+  background: var(--primary);
+  color: white;
+}
+
+.time-divider {
+  text-align: center;
+  font-size: 12px;
   color: var(--text-light);
+  padding: 8px 0;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
 }
 
 .input-area {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   padding: 12px 16px;
   background: var(--bg-card);
   border-top: 1px solid var(--border);
@@ -305,6 +498,11 @@ onMounted(async () => {
   color: var(--text);
 }
 
+.input-area input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
 .input-area button {
   padding: 10px 20px;
   background: var(--primary);
@@ -317,14 +515,6 @@ onMounted(async () => {
 .input-area button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
 }
 
 .members-panel {
@@ -376,5 +566,111 @@ onMounted(async () => {
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.group-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  padding: 10px;
+}
+
+.avatar-option {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  object-fit: cover;
+}
+
+.avatar-option:hover {
+  border-color: var(--primary);
+}
+
+.avatar-option.selected {
+  border-color: var(--primary);
+  background: rgba(24, 144, 255, 0.1);
+}
+
+.invite-hint {
+  margin-left: auto;
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.avatar-picker-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+}
+
+.current-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.upload-avatar-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--primary);
+  color: white;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.upload-avatar-btn input {
+  display: none;
+}
+
+.divider-text {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 13px;
+  margin: 10px 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cancel-btn, .save-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #eee;
+  color: var(--text);
+}
+
+.save-btn {
+  background: var(--primary);
+  color: white;
 }
 </style>

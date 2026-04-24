@@ -9,12 +9,12 @@ import java.util.List;
 public interface GroupMessageMapper {
 
     @Insert("INSERT INTO group_message(group_id, sender_id, content, send_time) " +
-            "VALUES(#{groupId}, #{senderId}, #{content}, DEFAULT)")
+            "VALUES(#{groupId}, #{senderId}, #{content}, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "messageId")
     int insert(GroupMessage message);
 
     @Select("SELECT message_id as messageId, group_id as groupId, sender_id as senderId, content, send_time as sendTime " +
-            "FROM group_message WHERE group_id = #{groupId} ORDER BY send_time DESC")
+            "FROM group_message WHERE group_id = #{groupId} ORDER BY send_time ASC")
     List<GroupMessage> findByGroupId(Long groupId);
 
     @Select("SELECT message_id as messageId, group_id as groupId, sender_id as senderId, content, send_time as sendTime " +

@@ -10,7 +10,7 @@ import java.util.List;
 public interface PrivateMessageMapper {
 
     @Insert("INSERT INTO private_message(sender_id, receiver_id, content, send_time, is_read, is_deleted) " +
-            "VALUES(#{senderId}, #{receiverId}, #{content}, DEFAULT, #{isRead}, #{isDeleted})")
+            "VALUES(#{senderId}, #{receiverId}, #{content}, NOW(), #{isRead}, #{isDeleted})")
     @Options(useGeneratedKeys = true, keyProperty = "messageId")
     int insert(PrivateMessage message);
 
@@ -19,7 +19,7 @@ public interface PrivateMessageMapper {
             "FROM private_message WHERE is_deleted = 0 AND " +
             "((sender_id = #{senderId} AND receiver_id = #{receiverId}) " +
             "OR (sender_id = #{receiverId} AND receiver_id = #{senderId})) " +
-            "ORDER BY send_time DESC")
+            "ORDER BY send_time ASC")
     List<PrivateMessage> findConversation(@Param("senderId") Long senderId,
                                          @Param("receiverId") Long receiverId);
 

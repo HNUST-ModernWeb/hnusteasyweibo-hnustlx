@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -30,6 +31,32 @@ public class GroupChatController {
             return Result.error("请先登录");
         }
         return Result.success(chatService.createGroup(userId, dto));
+    }
+
+    @PutMapping("/{groupId}")
+    @Operation(summary = "更新群聊", description = "更新群聊信息")
+    public Result<GroupChatVO> updateGroup(@PathVariable("groupId") Long groupId, @RequestBody GroupCreateDTO dto) {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        return Result.success(chatService.updateGroup(userId, groupId, dto));
+    }
+
+    @PostMapping("/{groupId}/avatar")
+    @Operation(summary = "上传群头像", description = "上传群头像图片")
+    public Result<String> uploadAvatar(@PathVariable("groupId") Long groupId, @RequestParam("avatar") MultipartFile file) {
+        Long userId = BaseContext.getCurrentId();
+        if (userId == null) {
+            return Result.error("请先登录");
+        }
+        return Result.success(chatService.uploadGroupAvatar(userId, groupId, file));
+    }
+
+    @GetMapping("/{groupId}")
+    @Operation(summary = "群聊详情", description = "获取群聊详细信息")
+    public Result<GroupChatVO> getGroupInfo(@PathVariable("groupId") Long groupId) {
+        return Result.success(chatService.getGroupInfo(groupId));
     }
 
     @GetMapping("/list")
@@ -63,6 +90,10 @@ public class GroupChatController {
             @PathVariable("groupId") Long groupId,
             @RequestParam(name = "page", defaultValue = "1") Long page,
             @RequestParam(name = "pageSize", defaultValue = "50") Long pageSize) {
+        Long userId = BaseContext.getCurrentId();
+        if (!chatService.isGroupMember(groupId, userId)) {
+            return Result.error("你不在群中");
+        }
         return Result.success(chatService.getGroupMembers(groupId, page, pageSize));
     }
 

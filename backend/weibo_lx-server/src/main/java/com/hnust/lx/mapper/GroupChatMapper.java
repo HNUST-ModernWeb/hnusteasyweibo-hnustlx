@@ -28,6 +28,9 @@ public interface GroupChatMapper {
     @Update("UPDATE group_chat SET is_deleted = 1 WHERE group_id = #{groupId}")
     int delete(Long groupId);
 
+    @Update("UPDATE group_chat SET group_name = #{groupName}, avatar = #{avatar} WHERE group_id = #{groupId}")
+    int update(GroupChat groupChat);
+
     @Select("SELECT COUNT(*) FROM group_chat WHERE is_deleted = 0")
     long count();
 }

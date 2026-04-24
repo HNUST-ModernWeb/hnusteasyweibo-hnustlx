@@ -10,6 +10,7 @@ import com.hnust.lx.mapper.FriendRequestMapper;
 import com.hnust.lx.mapper.UserMapper;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.FriendService;
+import com.hnust.lx.service.WebSocketNotificationService;
 import com.hnust.lx.vo.FriendRequestVO;
 import com.hnust.lx.vo.FriendVO;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class FriendServiceImpl implements FriendService {
     private final FriendMapper friendMapper;
     private final FriendRequestMapper friendRequestMapper;
     private final UserMapper userMapper;
+    private final WebSocketNotificationService notificationService;
 
     @Override
     @Transactional
@@ -46,6 +48,14 @@ public class FriendServiceImpl implements FriendService {
         request.setToUserId(toUserId);
         request.setStatus(0);
         friendRequestMapper.insert(request);
+        
+        User fromUser = userMapper.findById(fromUserId);
+        notificationService.notifyFriendRequest(toUserId, java.util.Map.of(
+            "requestId", request.getId(),
+            "fromUserId", fromUserId,
+            "fromUsername", fromUser != null ? fromUser.getUsername() : null,
+            "fromAvatar", fromUser != null ? fromUser.getAvatar() : null
+        ));
     }
 
     @Override

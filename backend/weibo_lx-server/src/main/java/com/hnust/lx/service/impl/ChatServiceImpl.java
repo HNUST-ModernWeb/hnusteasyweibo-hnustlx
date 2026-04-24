@@ -7,13 +7,19 @@ import com.hnust.lx.entity.*;
 import com.hnust.lx.mapper.*;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.ChatService;
+import com.hnust.lx.service.WebSocketNotificationService;
 import com.hnust.lx.vo.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +32,10 @@ public class ChatServiceImpl implements ChatService {
     private final GroupMemberMapper groupMemberMapper;
     private final GroupMessageMapper groupMessageMapper;
     private final GroupInviteMapper groupInviteMapper;
+    private final WebSocketNotificationService notificationService;
+
+    @Value("${weibo.web.upload-path}")
+    private String uploadPath;
 
     @Override
     @Transactional
@@ -44,12 +54,30 @@ public class ChatServiceImpl implements ChatService {
         vo.setReceiverId(message.getReceiverId());
         vo.setContent(message.getContent());
         vo.setSendTime(message.getSendTime());
+        vo.setIsRead(0);
+        
+        User sender = userMapper.findById(senderId);
+        if (sender != null) {
+            vo.setSenderAvatar(sender.getAvatar());
+        }
+        
+        notificationService.notifyPrivateMessage(dto.getReceiverId(), java.util.Map.of(
+            "messageId", message.getMessageId(),
+            "senderId", senderId,
+            "content", dto.getContent(),
+            "sendTime", message.getSendTime() != null ? message.getSendTime().toString() : "",
+            "senderName", sender != null ? sender.getUsername() : null,
+            "senderAvatar", sender != null ? sender.getAvatar() : null
+        ));
+        
         return vo;
     }
 
     @Override
     public PageResult getPrivateMessageList(Long currentUserId, Long otherUserId, Long page, Long pageSize) {
         List<PrivateMessage> allMessages = privateMessageMapper.findConversation(currentUserId, otherUserId);
+        User sender = userMapper.findById(currentUserId);
+        User receiver = userMapper.findById(otherUserId);
         List<PrivateMessageVO> records = allMessages.stream().map(m -> {
             PrivateMessageVO vo = new PrivateMessageVO();
             vo.setMessageId(m.getMessageId());
@@ -58,6 +86,13 @@ public class ChatServiceImpl implements ChatService {
             vo.setContent(m.getContent());
             vo.setSendTime(m.getSendTime());
             vo.setIsRead(m.getIsRead());
+            if (m.getSenderId().equals(currentUserId)) {
+                vo.setSenderAvatar(sender != null ? sender.getAvatar() : null);
+                vo.setReceiverAvatar(receiver != null ? receiver.getAvatar() : null);
+            } else {
+                vo.setSenderAvatar(receiver != null ? receiver.getAvatar() : null);
+                vo.setReceiverAvatar(sender != null ? sender.getAvatar() : null);
+            }
             return vo;
         }).collect(Collectors.toList());
         return new PageResult(records.size(), records);
@@ -123,6 +158,85 @@ public class ChatServiceImpl implements ChatService {
         vo.setGroupName(groupChat.getGroupName());
         vo.setAvatar(groupChat.getAvatar());
         return vo;
+    }
+
+    @Override
+    @Transactional
+    public GroupChatVO updateGroup(Long userId, Long groupId, GroupCreateDTO dto) {
+        GroupChat groupChat = groupChatMapper.findById(groupId);
+        if (groupChat == null) {
+            throw new RuntimeException("群不存在");
+        }
+        if (!groupChat.getCreatorId().equals(userId)) {
+            throw new RuntimeException("只有群主可以修改群信息");
+        }
+        
+        if (dto.getGroupName() != null && !dto.getGroupName().isEmpty()) {
+            groupChat.setGroupName(dto.getGroupName());
+        }
+        if (dto.getAvatar() != null) {
+            groupChat.setAvatar(dto.getAvatar());
+        }
+        
+        groupChatMapper.update(groupChat);
+        
+        GroupChatVO vo = new GroupChatVO();
+        vo.setGroupId(groupChat.getGroupId());
+        vo.setGroupName(groupChat.getGroupName());
+        vo.setAvatar(groupChat.getAvatar());
+        return vo;
+    }
+
+    @Override
+    public GroupChatVO getGroupInfo(Long groupId) {
+        GroupChat groupChat = groupChatMapper.findById(groupId);
+        if (groupChat == null) {
+            throw new RuntimeException("群不存在");
+        }
+        GroupChatVO vo = new GroupChatVO();
+        vo.setGroupId(groupChat.getGroupId());
+        vo.setGroupName(groupChat.getGroupName());
+        vo.setAvatar(groupChat.getAvatar());
+        return vo;
+    }
+
+    @Override
+    public String uploadGroupAvatar(Long userId, Long groupId, MultipartFile file) {
+        GroupChat groupChat = groupChatMapper.findById(groupId);
+        if (groupChat == null) {
+            throw new RuntimeException("群不存在");
+        }
+        if (!groupChat.getCreatorId().equals(userId)) {
+            throw new RuntimeException("只有群主可以修改群头像");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("文件不能为空");
+        }
+        
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        
+        String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+        File uploadDir = new File(uploadPath + "group/");
+        if (!uploadDir.exists()) {
+            uploadDir.mkdirs();
+        }
+        
+        try {
+            File destFile = new File(uploadDir, fileName);
+            file.transferTo(destFile);
+            
+            String avatarUrl = "/upload/group/" + fileName;
+            groupChat.setAvatar(avatarUrl);
+            groupChatMapper.update(groupChat);
+            
+            return avatarUrl;
+        } catch (Exception e) {
+            throw new RuntimeException("文件保存失败: " + e.getMessage());
+        }
     }
 
     @Override
@@ -230,6 +344,9 @@ public class ChatServiceImpl implements ChatService {
         vo.setSenderAvatar(user != null ? user.getAvatar() : null);
         vo.setContent(content);
         vo.setSendTime(message.getSendTime());
+        
+        notificationService.broadcastGroupMessage(groupId, vo);
+        
         return vo;
     }
 
@@ -278,6 +395,17 @@ public class ChatServiceImpl implements ChatService {
         invite.setInviterId(userId);
         invite.setStatus(0);
         groupInviteMapper.insert(invite);
+        
+        GroupChat group = groupChatMapper.findById(groupId);
+        User inviter = userMapper.findById(userId);
+        notificationService.notifyGroupInvite(inviteUserId, java.util.Map.of(
+            "inviteId", invite.getId(),
+            "groupId", groupId,
+            "groupName", group != null ? group.getGroupName() : null,
+            "inviterId", userId,
+            "inviterName", inviter != null ? inviter.getUsername() : null,
+            "inviterAvatar", inviter != null ? inviter.getAvatar() : null
+        ));
     }
 
     @Override
@@ -353,5 +481,10 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public Integer getInviteCount(Long userId) {
         return groupInviteMapper.countPendingByUserId(userId);
+    }
+
+    @Override
+    public boolean isGroupMember(Long groupId, Long userId) {
+        return groupMemberMapper.exists(groupId, userId) > 0;
     }
 }

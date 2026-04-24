@@ -16,4 +16,6 @@ public class PrivateMessageVO {
     private String content;
     private LocalDateTime sendTime;
     private Integer isRead;
+    private String senderAvatar;
+    private String receiverAvatar;
 }

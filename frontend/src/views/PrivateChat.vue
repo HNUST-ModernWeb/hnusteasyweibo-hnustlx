@@ -9,15 +9,18 @@
       </div>
       
       <div ref="messagesContainer" class="messages-wrapper">
-        <div 
-          v-for="msg in messages" 
-          :key="msg.messageId"
-          :class="['message-bubble', { mine: msg.senderId === currentUserId }]"
-        >
-          <img v-if="msg.senderId !== currentUserId" :src="chatUser?.avatar || defaultAvatar" class="avatar" />
-          <div class="bubble-content">{{ msg.content }}</div>
-          <img v-if="msg.senderId === currentUserId" :src="currentUser?.avatar || defaultAvatar" class="avatar" />
-        </div>
+        <template v-for="(msg, index) in messages" :key="msg.messageId">
+          <div v-if="index > 0 && showTimeDivider(msg.sendTime, messages[index - 1].sendTime)" class="time-divider">
+            {{ formatFullTime(msg.sendTime) }}
+          </div>
+          <div 
+            :class="['message-bubble', { mine: msg.senderId === currentUserId }]"
+          >
+            <img v-if="msg.senderId !== currentUserId" :src="msg.senderAvatar || chatUser?.avatar || defaultAvatar" class="avatar" />
+            <div class="bubble-content">{{ msg.content }}</div>
+            <img v-if="msg.senderId === currentUserId" :src="msg.senderAvatar || currentUser?.avatar || defaultAvatar" class="avatar" />
+          </div>
+        </template>
         
         <div v-if="messages.length === 0" class="empty-state">
           <p>开始对话吧</p>
@@ -38,10 +41,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { chatApi, userApi, friendApi } from '../api'
 import { notify } from '../utils/notify'
+import { wsService } from '../utils/websocket'
 import NavBar from '../components/NavBar.vue'
 
 const router = useRouter()
@@ -56,6 +60,19 @@ const currentUserId = ref(null)
 const currentUser = ref(null)
 
 const userId = computed(() => parseInt(route.params.userId))
+
+const handleNewMessage = (data) => {
+  if (data.senderId === userId.value) {
+    messages.value.push({
+      messageId: data.messageId,
+      senderId: data.senderId,
+      receiverId: currentUserId.value,
+      content: data.content,
+      sendTime: data.sendTime
+    })
+    scrollToBottom()
+  }
+}
 
 const fetchMessages = async () => {
   try {
@@ -84,10 +101,35 @@ const sendMessage = async () => {
       content: inputMessage.value.trim()
     })
     inputMessage.value = ''
-    fetchMessages()
+    await fetchMessages()
+    nextTick(scrollToBottom)
   } catch (e) {
-    console.error('发送消息失败:', e)
+    notify.error('发送失败: ' + (e.response?.data?.msg || e.message))
   }
+}
+
+const formatFullTime = (time) => {
+  if (!time) return ''
+  const str = String(time).replace(' ', 'T')
+  const date = new Date(str)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  if (msgDate.getTime() === today.getTime()) {
+    return String(time).includes('T') 
+      ? String(time).split('T')[1]?.slice(0, 5) 
+      : String(time).substring(11, 16)
+  }
+  return String(time).includes('T')
+    ? String(time).replace('T', ' ').substring(0, 16)
+    : String(time).substring(0, 16)
+}
+
+const showTimeDivider = (time, prevTime) => {
+  if (!time || !prevTime) return false
+  const t1 = new Date(String(time).replace(' ', 'T')).getTime()
+  const t2 = new Date(String(prevTime).replace(' ', 'T')).getTime()
+  return t1 - t2 > 60000
 }
 
 const scrollToBottom = () => {
@@ -115,8 +157,13 @@ onMounted(async () => {
     router.replace('/messages')
     return
   }
+  wsService.on('private_message', handleNewMessage)
   await fetchUserInfo()
   await fetchMessages()
+})
+
+onUnmounted(() => {
+  wsService.off('private_message', handleNewMessage)
 })
 </script>
 
@@ -234,6 +281,13 @@ onMounted(async () => {
 .input-area button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.time-divider {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light);
+  padding: 8px 0;
 }
 
 .empty-state {

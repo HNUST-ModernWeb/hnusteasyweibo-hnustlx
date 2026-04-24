@@ -13,6 +13,7 @@ import com.hnust.lx.mapper.PostMapper;
 import com.hnust.lx.mapper.UserMapper;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.LikeService;
+import com.hnust.lx.service.WebSocketNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
@@ -30,6 +31,7 @@ public class LikeServiceImpl implements LikeService {
     private final PostLikeMapper postLikeMapper;
     private final PostMapper postMapper;
     private final UserMapper userMapper;
+    private final WebSocketNotificationService notificationService;
 
     @Override
     @CacheEvict(value = {"hotUsers"}, allEntries = true)
@@ -45,6 +47,7 @@ public class LikeServiceImpl implements LikeService {
         if (exists) {
             postLikeMapper.delete(dto.getPostId(), dto.getUserId());
             postMapper.updateLikeCount(dto.getPostId(), -1);
+            notificationService.broadcastPostUpdate(Map.of("type", "like_update", "postId", dto.getPostId()));
             return false;
         } else {
             PostLike postLike = PostLike.builder()
@@ -53,6 +56,20 @@ public class LikeServiceImpl implements LikeService {
                     .build();
             postLikeMapper.insert(postLike);
             postMapper.updateLikeCount(dto.getPostId(), 1);
+            
+            Map<String, Object> likeData = new HashMap<>();
+            likeData.put("postId", dto.getPostId());
+            likeData.put("userId", dto.getUserId());
+            User liker = userMapper.findById(dto.getUserId());
+            if (liker != null) {
+                likeData.put("username", liker.getUsername());
+                likeData.put("avatar", liker.getAvatar());
+            }
+            
+            if (!dto.getUserId().equals(post.getUserId())) {
+                notificationService.notifyNewLike(post.getUserId(), likeData);
+            }
+            notificationService.broadcastPostUpdate(Map.of("type", "like_update", "postId", dto.getPostId()));
             return true;
         }
     }

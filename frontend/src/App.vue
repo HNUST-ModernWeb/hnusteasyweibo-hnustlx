@@ -4,7 +4,16 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import BottomNav from './components/BottomNav.vue'
+import { wsService } from './utils/websocket'
+
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    wsService.connect()
+  }
+})
 </script>
 
 <style>

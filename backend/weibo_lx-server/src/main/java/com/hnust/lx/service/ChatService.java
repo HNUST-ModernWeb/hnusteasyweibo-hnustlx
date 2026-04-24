@@ -3,6 +3,7 @@ package com.hnust.lx.service;
 import com.hnust.lx.dto.*;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.vo.*;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface ChatService {
 
@@ -17,6 +18,12 @@ public interface ChatService {
     Integer markAsRead(Long currentUserId, Long fromUserId);
 
     GroupChatVO createGroup(Long creatorId, GroupCreateDTO dto);
+
+    GroupChatVO updateGroup(Long userId, Long groupId, GroupCreateDTO dto);
+
+    GroupChatVO getGroupInfo(Long groupId);
+
+    String uploadGroupAvatar(Long userId, Long groupId, MultipartFile file);
 
     PageResult getGroupList(Long userId, Long page, Long pageSize);
 
@@ -39,4 +46,6 @@ public interface ChatService {
     void rejectInvite(Long userId, Long inviteId);
 
     Integer getInviteCount(Long userId);
+
+    boolean isGroupMember(Long groupId, Long userId);
 }

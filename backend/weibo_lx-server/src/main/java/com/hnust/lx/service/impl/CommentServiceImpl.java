@@ -13,6 +13,7 @@ import com.hnust.lx.mapper.PostMapper;
 import com.hnust.lx.mapper.UserMapper;
 import com.hnust.lx.result.PageResult;
 import com.hnust.lx.service.CommentService;
+import com.hnust.lx.service.WebSocketNotificationService;
 import com.hnust.lx.vo.CommentVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final PostMapper postMapper;
     private final UserMapper userMapper;
+    private final WebSocketNotificationService notificationService;
 
     @Override
     @Transactional
@@ -47,7 +49,23 @@ public class CommentServiceImpl implements CommentService {
         
         postMapper.updateCommentCount(dto.getPostId(), 1);
         
-        return buildCommentVO(comment);
+        CommentVO vo = buildCommentVO(comment);
+        
+        notificationService.broadcastPostUpdate(java.util.Map.of("type", "comment_update", "postId", dto.getPostId()));
+        
+        if (!dto.getUserId().equals(post.getUserId())) {
+            User commenter = userMapper.findById(dto.getUserId());
+            notificationService.notifyNewComment(post.getUserId(), java.util.Map.of(
+                "commentId", comment.getCommentId(),
+                "postId", dto.getPostId(),
+                "userId", dto.getUserId(),
+                "username", commenter != null ? commenter.getUsername() : null,
+                "avatar", commenter != null ? commenter.getAvatar() : null,
+                "content", dto.getContent()
+            ));
+        }
+        
+        return vo;
     }
 
     @Override
